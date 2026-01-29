@@ -76,7 +76,8 @@ class DemoConfig:
             'temperature': 0,
             'top_k': 5,
             'chunk_size': 900,
-            'chunk_overlap': 150
+            'chunk_overlap': 150,
+            'citations_enabled': True
         }
     
     def validate_demo_assets(self) -> Tuple[bool, List[str]]:
