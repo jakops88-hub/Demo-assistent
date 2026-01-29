@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 def format_citations(documents: List[Document]) -> str:
     """
-    Format citations from retrieved documents.
+    Format citations from retrieved documents as plain text list.
     
     Args:
         documents: List of retrieved documents with metadata
@@ -39,7 +39,7 @@ def format_citations(documents: List[Document]) -> str:
         if page is not None:
             citations_by_file[filename]['pages'].add(page)
     
-    # Format citations
+    # Format citations as plain text list
     citation_parts = []
     for filename, data in sorted(citations_by_file.items()):
         pages = sorted(data['pages']) if data['pages'] else []
@@ -47,9 +47,9 @@ def format_citations(documents: List[Document]) -> str:
         if pages:
             # Format page ranges
             page_str = _format_page_ranges(pages)
-            citation_parts.append(f"**{filename}** (pages {page_str})")
+            citation_parts.append(f"• {filename} (pages {page_str})")
         else:
-            citation_parts.append(f"**{filename}**")
+            citation_parts.append(f"• {filename}")
     
     return "\n".join(citation_parts)
 
@@ -107,6 +107,6 @@ def create_sources_section(documents: List[Document]) -> str:
     citations = format_citations(documents)
     
     if citations:
-        return f"\n\n---\n\n**📚 Sources:**\n\n{citations}"
+        return f"\n\nSources:\n\n{citations}"
     
     return ""
