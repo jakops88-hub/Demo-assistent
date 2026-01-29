@@ -1,0 +1,23 @@
+{
+  "HR": [
+    "What is the vacation policy for employees in Sweden vs Germany?",
+    "How many sick days do employees get per year?",
+    "What are the requirements for remote work eligibility?",
+    "What professional development budget is available to employees?",
+    "What is the daily meal allowance when traveling for business?"
+  ],
+  "Legal": [
+    "Does this contract mention flood insurance or special conditions?",
+    "What is the termination notice period for tenants?",
+    "What is the security deposit amount and when is it returned?",
+    "Are pets allowed and what are the pet deposit requirements?",
+    "What are the landlord's maintenance responsibilities?"
+  ],
+  "Commerce": [
+    "Which product had the highest margin in Q4 and why?",
+    "What were the total revenue and units sold for Widget Pro in December?",
+    "Which product showed the most growth from October to December?",
+    "What is the average revenue per day in November?",
+    "Which date had the highest total sales across all products in Q4?"
+  ]
+}

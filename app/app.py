@@ -14,12 +14,15 @@ from core.vectorstore import VectorStore
 from core.models import create_embeddings
 from core.rag import RAGPipeline
 from core.logging_utils import get_logger
+from core.demo import DemoConfig
 from app.ui_components import (
     render_sidebar_config,
     render_sidebar_actions,
     render_indexed_files,
     render_chat_history,
     render_chat_message,
+    render_demo_mode_controls,
+    render_demo_indicator,
     show_success,
     show_error,
     show_info,
@@ -61,6 +64,19 @@ def initialize_session_state():
     
     if 'indexed_files' not in st.session_state:
         st.session_state.indexed_files = []
+    
+    # Demo mode state
+    if 'demo_loaded' not in st.session_state:
+        st.session_state.demo_loaded = False
+    
+    if 'demo_config' not in st.session_state:
+        st.session_state.demo_config = DemoConfig()
+    
+    if 'demo_questions' not in st.session_state:
+        st.session_state.demo_questions = {}
+    
+    if 'pending_question' not in st.session_state:
+        st.session_state.pending_question = None
 
 
 def initialize_components(provider: str):
@@ -168,12 +184,70 @@ def handle_reindex(ingestor: DocumentIngestor):
         with st.spinner("Clearing vector store..."):
             st.session_state.vector_store.clear()
             st.session_state.indexed_files = []
+            st.session_state.demo_loaded = False
         
         show_success("Vector store cleared. Please upload documents to re-index.")
     
     except Exception as e:
         logger.error(f"Error during re-index: {e}")
         show_error(f"Error during re-index: {e}")
+
+
+def handle_demo_load(ingestor: DocumentIngestor, force_reindex: bool = False):
+    """
+    Handle loading demo documents.
+    
+    Args:
+        ingestor: DocumentIngestor instance
+        force_reindex: Whether to force re-indexing even if already loaded
+    """
+    # Check if already loaded
+    if st.session_state.demo_loaded and not force_reindex:
+        show_info("✅ Demo documents already indexed! Use the 🔄 button to force re-index.")
+        return
+    
+    try:
+        # Validate demo assets exist
+        assets_valid, missing = st.session_state.demo_config.validate_demo_assets()
+        if not assets_valid:
+            show_error(f"Demo assets missing: {', '.join(missing)}")
+            return
+        
+        # Get demo file paths
+        demo_paths = st.session_state.demo_config.get_demo_file_paths()
+        
+        if not demo_paths:
+            show_error("No demo files found!")
+            return
+        
+        with st.spinner(f"Loading {len(demo_paths)} demo files..."):
+            # Ingest demo files
+            documents, failed_files = ingestor.ingest_multiple(file_paths=demo_paths)
+            
+            if documents:
+                # Add to vector store
+                st.session_state.vector_store.add_documents(documents)
+                
+                # Update indexed files
+                st.session_state.indexed_files = st.session_state.vector_store.get_indexed_files()
+                
+                # Mark demo as loaded
+                st.session_state.demo_loaded = True
+                
+                # Load demo questions
+                st.session_state.demo_questions = st.session_state.demo_config.load_demo_questions()
+                
+                success_msg = f"✅ Demo documents indexed: {len(demo_paths)} files, {len(documents)} chunks!"
+                show_success(success_msg)
+                
+                if failed_files:
+                    show_warning(f"⚠️ Some files failed: {len(failed_files)}")
+            else:
+                show_error("Failed to extract documents from demo files.")
+    
+    except Exception as e:
+        logger.error(f"Error loading demo documents: {e}")
+        show_error(f"Error loading demo documents: {e}")
 
 
 def handle_chat_input(prompt: str, top_k: int, citations_enabled: bool):
@@ -224,6 +298,16 @@ def main():
     # Render sidebar actions
     actions = render_sidebar_actions()
     
+    # Render demo mode controls (always render to get state)
+    demo_state = render_demo_mode_controls(st.session_state.demo_questions)
+    
+    # Apply demo config overrides if demo mode is enabled
+    if demo_state['enabled']:
+        demo_overrides = st.session_state.demo_config.get_demo_config_overrides()
+        config_values['top_k'] = demo_overrides['top_k']
+        config_values['chunk_size'] = demo_overrides['chunk_size']
+        config_values['chunk_overlap'] = demo_overrides['chunk_overlap']
+    
     # Render indexed files in sidebar
     render_indexed_files(st.session_state.indexed_files)
     
@@ -241,6 +325,10 @@ def main():
     # Main content area
     st.title("📚 Document Chatbot")
     st.markdown("Upload documents and ask questions about them!")
+    
+    # Show demo indicator if demo is loaded
+    if st.session_state.demo_loaded:
+        render_demo_indicator(True)
     
     # File upload section
     st.subheader("📤 Upload Documents")
@@ -260,6 +348,19 @@ def main():
         ingestor.text_splitter.chunk_size = config_values['chunk_size']
         ingestor.text_splitter.chunk_overlap = config_values['chunk_overlap']
     
+    # Handle demo document loading
+    if demo_state['enabled']:
+        if demo_state['load_clicked']:
+            handle_demo_load(ingestor, force_reindex=False)
+            st.rerun()
+        elif demo_state['force_reindex']:
+            handle_demo_load(ingestor, force_reindex=True)
+            st.rerun()
+        
+        # Handle insert question
+        if demo_state['insert_clicked'] and demo_state['selected_question']:
+            st.session_state.pending_question = demo_state['selected_question']
+    
     # Handle file upload
     if uploaded_files:
         if st.button("📥 Index Files", type="primary"):
@@ -277,13 +378,40 @@ def main():
     # Display chat history
     render_chat_history(st.session_state.messages)
     
-    # Chat input
-    if prompt := st.chat_input("Ask a question about your documents..."):
-        handle_chat_input(
-            prompt,
-            config_values['top_k'],
-            config_values['citations_enabled']
-        )
+    # Chat input - use text_area if there's a pending question, otherwise use chat_input
+    if st.session_state.pending_question:
+        # Show the pending question in an editable text area
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            question_text = st.text_area(
+                "Edit and press Ask to submit:",
+                value=st.session_state.pending_question,
+                height=100,
+                key="pending_question_input"
+            )
+        with col2:
+            st.write("")  # Spacing
+            st.write("")  # Spacing
+            if st.button("Ask", type="primary", use_container_width=True):
+                if question_text.strip():
+                    handle_chat_input(
+                        question_text,
+                        config_values['top_k'],
+                        config_values['citations_enabled']
+                    )
+                    st.session_state.pending_question = None
+                    st.rerun()
+            if st.button("Cancel", use_container_width=True):
+                st.session_state.pending_question = None
+                st.rerun()
+    else:
+        # Normal chat input
+        if prompt := st.chat_input("Ask a question about your documents..."):
+            handle_chat_input(
+                prompt,
+                config_values['top_k'],
+                config_values['citations_enabled']
+            )
 
 
 if __name__ == "__main__":

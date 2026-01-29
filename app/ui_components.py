@@ -2,7 +2,7 @@
 UI component helpers for Streamlit.
 """
 import streamlit as st
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Optional
 
 
 def render_sidebar_config(config) -> dict:
@@ -162,3 +162,86 @@ def show_info(message: str):
 def show_warning(message: str):
     """Show warning message."""
     st.warning(message)
+
+
+def render_demo_mode_controls(demo_questions: Dict[str, List[str]]) -> dict:
+    """
+    Render demo mode controls in sidebar.
+    
+    Args:
+        demo_questions: Dictionary of demo questions by category
+        
+    Returns:
+        Dictionary with demo mode state
+    """
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🎬 Demo")
+    
+    demo_enabled = st.sidebar.checkbox(
+        "Demo mode",
+        value=False,
+        help="Enable demo mode with pre-loaded sample documents"
+    )
+    
+    demo_state = {
+        'enabled': demo_enabled,
+        'load_clicked': False,
+        'force_reindex': False,
+        'selected_question': None,
+        'insert_clicked': False
+    }
+    
+    if demo_enabled:
+        # Load demo documents button
+        col1, col2 = st.sidebar.columns([3, 1])
+        with col1:
+            demo_state['load_clicked'] = st.button(
+                "📥 Load demo documents",
+                help="Index demo documents (HR, Legal, Commerce)",
+                use_container_width=True
+            )
+        with col2:
+            demo_state['force_reindex'] = st.button(
+                "🔄",
+                help="Force re-index",
+                use_container_width=True
+            )
+        
+        # Suggested questions
+        if demo_questions:
+            st.sidebar.markdown("**Suggested questions:**")
+            
+            # Flatten questions with category prefix
+            all_questions = []
+            for category, questions in demo_questions.items():
+                for q in questions:
+                    all_questions.append(f"[{category}] {q}")
+            
+            selected = st.sidebar.selectbox(
+                "Select a question",
+                options=[""] + all_questions,
+                label_visibility="collapsed",
+                help="Choose a demo question to ask"
+            )
+            
+            if selected:
+                demo_state['selected_question'] = selected.split("] ", 1)[1] if "] " in selected else selected
+                
+                demo_state['insert_clicked'] = st.sidebar.button(
+                    "💬 Insert question",
+                    help="Insert selected question into chat input",
+                    use_container_width=True
+                )
+    
+    return demo_state
+
+
+def render_demo_indicator(demo_loaded: bool):
+    """
+    Render demo mode indicator at top of main page.
+    
+    Args:
+        demo_loaded: Whether demo data is loaded
+    """
+    if demo_loaded:
+        st.info("🎬 **Demo data loaded** - Using sample documents for demonstration", icon="ℹ️")
