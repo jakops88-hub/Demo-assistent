@@ -72,8 +72,13 @@ class DocumentIngestor:
         elif file_obj and filename:
             ext = Path(filename).suffix.lower()
             content = file_obj.read()
-            if hasattr(file_obj, 'seek'):
-                file_obj.seek(0)  # Reset for potential re-reading
+            # Reset file pointer if the object supports it
+            if hasattr(file_obj, 'seek') and hasattr(file_obj, 'seekable'):
+                try:
+                    if file_obj.seekable():
+                        file_obj.seek(0)
+                except Exception:
+                    pass  # Some file objects don't support seeking
         else:
             raise ValueError("Either file_path or (file_obj and filename) must be provided")
         
@@ -240,7 +245,7 @@ class DocumentIngestor:
             raise
     
     def ingest_multiple(self, file_paths: List[str] = None,
-                       file_objects: List[tuple] = None) -> List[Document]:
+                       file_objects: List[tuple] = None) -> tuple:
         """
         Ingest multiple files.
         
@@ -249,9 +254,11 @@ class DocumentIngestor:
             file_objects: List of (file_obj, filename) tuples
             
         Returns:
-            Combined list of documents
+            Tuple of (all_documents, failed_files) where failed_files is a list of
+            (filename, error_message) tuples
         """
         all_documents = []
+        failed_files = []
         
         if file_paths:
             for path in file_paths:
@@ -260,6 +267,7 @@ class DocumentIngestor:
                     all_documents.extend(docs)
                 except Exception as e:
                     logger.error(f"Failed to ingest {path}: {e}")
+                    failed_files.append((path, str(e)))
         
         if file_objects:
             for file_obj, filename in file_objects:
@@ -268,5 +276,6 @@ class DocumentIngestor:
                     all_documents.extend(docs)
                 except Exception as e:
                     logger.error(f"Failed to ingest {filename}: {e}")
+                    failed_files.append((filename, str(e)))
         
-        return all_documents
+        return all_documents, failed_files

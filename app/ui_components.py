@@ -47,6 +47,7 @@ def render_sidebar_config(config) -> dict:
     
     # Chunking settings
     st.sidebar.subheader("📄 Chunking Settings")
+    st.sidebar.caption("⚠️ Changes require re-indexing documents")
     chunk_size = st.sidebar.number_input(
         "Chunk Size",
         min_value=100,

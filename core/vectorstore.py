@@ -145,12 +145,27 @@ class VectorStore:
             logger.error(f"Error during similarity search with score: {e}")
             raise
     
+    def get_collection_count(self) -> int:
+        """
+        Get the number of documents in the collection.
+        
+        Returns:
+            Document count
+        """
+        try:
+            collection = self._store._collection
+            return collection.count()
+        except Exception as e:
+            logger.error(f"Error getting collection count: {e}")
+            return 0
+    
     def clear(self):
         """Clear all documents from the vector store."""
         try:
             logger.info("Clearing vector store")
             
             # Get all document IDs
+            count = self.get_collection_count()
             collection = self._store._collection
             all_data = collection.get()
             
@@ -172,12 +187,7 @@ class VectorStore:
         Returns:
             Document count
         """
-        try:
-            collection = self._store._collection
-            return collection.count()
-        except Exception as e:
-            logger.error(f"Error getting document count: {e}")
-            return 0
+        return self.get_collection_count()
     
     def get_indexed_files(self) -> List[str]:
         """

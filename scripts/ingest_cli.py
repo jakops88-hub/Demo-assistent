@@ -72,7 +72,12 @@ def main():
         
         # Process files
         logger.info(f"Processing {len(args.files)} file(s)...")
-        documents = ingestor.ingest_multiple(file_paths=args.files)
+        documents, failed_files = ingestor.ingest_multiple(file_paths=args.files)
+        
+        if failed_files:
+            logger.warning(f"Failed to process {len(failed_files)} file(s):")
+            for filename, error in failed_files:
+                logger.warning(f"  • {filename}: {error}")
         
         if documents:
             # Add to vector store

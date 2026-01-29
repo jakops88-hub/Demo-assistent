@@ -146,6 +146,12 @@ class Config:
 _config_instance = None
 
 
+def reset_config():
+    """Reset the global configuration instance."""
+    global _config_instance
+    _config_instance = None
+
+
 def get_config(config_path: str = "config/config.example.yaml") -> Config:
     """
     Get or create global configuration instance.

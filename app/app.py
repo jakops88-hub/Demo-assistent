@@ -132,7 +132,7 @@ def handle_file_upload(uploaded_files, ingestor: DocumentIngestor):
                 file_objects.append((uploaded_file, uploaded_file.name))
             
             # Ingest files
-            documents = ingestor.ingest_multiple(file_objects=file_objects)
+            documents, failed_files = ingestor.ingest_multiple(file_objects=file_objects)
             
             if documents:
                 # Add to vector store
@@ -141,7 +141,14 @@ def handle_file_upload(uploaded_files, ingestor: DocumentIngestor):
                 # Update indexed files
                 st.session_state.indexed_files = st.session_state.vector_store.get_indexed_files()
                 
-                show_success(f"✅ Successfully indexed {len(uploaded_files)} file(s) with {len(documents)} chunks!")
+                success_count = len(uploaded_files) - len(failed_files)
+                show_success(f"✅ Successfully indexed {success_count} file(s) with {len(documents)} chunks!")
+                
+                # Show failed files if any
+                if failed_files:
+                    show_warning(f"⚠️ Failed to process {len(failed_files)} file(s):")
+                    for filename, error in failed_files:
+                        st.warning(f"  • {filename}: {error}")
             else:
                 show_warning("No documents were extracted from the uploaded files.")
     
