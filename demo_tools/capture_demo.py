@@ -271,11 +271,11 @@ def perform_playwright_automation(output_dir: Path) -> bool:
             target_question = "What is the vacation policy for employees in Sweden vs Germany?"
             for attempt in range(3):
                 try:
-                    # Use role-based locator to find the combobox/selectbox
-                    # Look for the selectbox near "Suggested question" label
+                    # Find the selectbox using text-based filter locator
+                    # Note: We use a text filter because the selectbox doesn't have a proper role attribute
                     selectbox_container = page.locator('div').filter(has_text="Suggested question").locator('select').first
                     
-                    # Get all options to find the exact HR question
+                    # Strategy 1: Try to find option with exact target question
                     options = selectbox_container.locator('option').all()
                     question_found = False
                     for option in options:
@@ -288,29 +288,33 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                             question_found = True
                             break
                     
-                    if not question_found:
-                        # Try selecting by label text with category prefix
-                        try:
-                            selectbox_container.select_option(label=f"[hr] {target_question}")
-                            page.wait_for_timeout(800)
-                            print_substep("  ✓ Selected HR question by label")
-                            question_found = True
-                        except Exception:
-                            # Last resort: search for "vacation policy"
-                            for option in options:
-                                text = option.text_content()
-                                if text and "vacation policy" in text.lower():
-                                    option_value = option.get_attribute('value') or text
-                                    selectbox_container.select_option(value=option_value)
-                                    page.wait_for_timeout(800)
-                                    print_substep("  ✓ Selected vacation policy question")
-                                    question_found = True
-                                    break
-                    
                     if question_found:
                         break
+                    
+                    # Strategy 2: Try selecting by label text with category prefix
+                    try:
+                        selectbox_container.select_option(label=f"[hr] {target_question}")
+                        page.wait_for_timeout(800)
+                        print_substep("  ✓ Selected HR question by label")
+                        break
+                    except Exception:
+                        pass
+                    
+                    # Strategy 3: Search for partial match with "vacation policy"
+                    for option in options:
+                        text = option.text_content()
+                        if text and "vacation policy" in text.lower():
+                            option_value = option.get_attribute('value') or text
+                            selectbox_container.select_option(value=option_value)
+                            page.wait_for_timeout(800)
+                            print_substep("  ✓ Selected vacation policy question")
+                            break
                     else:
+                        # No match found, raise exception to trigger retry
                         raise Exception("Target question not found in options")
+                    
+                    # If we reach here, strategy 3 succeeded
+                    break
                         
                 except Exception as e:
                     if attempt == 2:
@@ -321,6 +325,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                             selectbox_container.select_option(index=1)  # Select first non-empty option
                             page.wait_for_timeout(800)
                             print_substep("  ✓ Selected first available question")
+                            break
                         except Exception:  # Catch Playwright errors
                             raise Exception(f"Failed to select question: {e}")
                     page.wait_for_timeout(1000)
