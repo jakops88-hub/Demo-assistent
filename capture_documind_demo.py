@@ -31,6 +31,11 @@ DEMO_DIR = Path("./demo")
 SCREENSHOTS_DIR = DEMO_DIR / "screenshots"
 VIDEO_DIR = DEMO_DIR / "video"
 
+# Timeout constants (in seconds)
+INDEXING_TIMEOUT_SECONDS = 60
+ANSWER_TIMEOUT_SECONDS = 60
+SERVER_READY_TIMEOUT = 60
+
 
 def print_step(message: str):
     """Print a formatted step message."""
@@ -123,7 +128,7 @@ def start_dev_server():
     return process
 
 
-def wait_for_server(timeout=60):
+def wait_for_server(timeout=SERVER_READY_TIMEOUT):
     """Wait for the dev server to be ready."""
     print_info("Waiting for dev server to be ready...")
     
@@ -169,7 +174,10 @@ def stop_server(process):
             parent.terminate()
             parent.wait(timeout=3)
         except psutil.TimeoutExpired:
-            parent.kill()
+            try:
+                parent.kill()
+            except psutil.NoSuchProcess:
+                pass
         except psutil.NoSuchProcess:
             pass
         
@@ -242,7 +250,7 @@ def capture_demo():
                     print_info("✓ Demo documents loading...")
                     
                     # Wait for indexing
-                    for i in range(60):
+                    for i in range(INDEXING_TIMEOUT_SECONDS):
                         try:
                             if (page.get_by_text("Demo documents indexed").is_visible(timeout=500) or
                                 page.get_by_text("Indexed files").is_visible(timeout=500)):
@@ -304,7 +312,7 @@ def capture_demo():
                 
                 # Wait for answer
                 print_info("Waiting for answer...")
-                for i in range(60):
+                for i in range(ANSWER_TIMEOUT_SECONDS):
                     try:
                         chat_messages = page.locator('[data-testid="stChatMessage"]').count()
                         if chat_messages >= 2:
