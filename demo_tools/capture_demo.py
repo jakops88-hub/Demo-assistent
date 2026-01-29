@@ -214,7 +214,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 try:
                     demo_checkbox = page.get_by_role("checkbox", name="Demo mode")
                     demo_checkbox.check(timeout=5000)
-                    page.wait_for_timeout(1000)
+                    page.wait_for_timeout(800)
                     print_substep("  ✓ Demo mode enabled")
                     break
                 except Exception as e:
@@ -228,6 +228,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 try:
                     load_btn = page.get_by_role("button", name="Load demo documents", exact=True)
                     load_btn.click(timeout=5000)
+                    page.wait_for_timeout(800)
                     print_substep("  ✓ Clicked Load demo documents")
                     break
                 except Exception as e:
@@ -242,19 +243,20 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                     # Look for success message or indexed files indicator
                     if (page.get_by_text("Demo documents indexed").is_visible(timeout=500) or
                         page.get_by_text("Demo data loaded").is_visible(timeout=500) or
+                        page.get_by_text("Index ready").is_visible(timeout=500) or
                         page.get_by_text("Indexed files").is_visible(timeout=500)):
                         print_substep("  ✓ Indexing complete!")
                         break
                 except Exception:  # Catch Playwright timeout and other exceptions
                     pass
                 
-                if attempt == 239:
+                if attempt == 239:  # After 240 attempts * 0.5s = 120s timeout
                     raise Exception("Indexing did not complete within 120s")
                 
                 time.sleep(0.5)
             
             # Wait for UI to settle
-            page.wait_for_timeout(1500)
+            page.wait_for_timeout(1000)
             
             # Screenshot 1: Indexed files visible
             print_substep("Step 3.4: Capturing screenshot 1 (Indexed files)...")
@@ -266,36 +268,58 @@ def perform_playwright_automation(output_dir: Path) -> bool:
             
             # Step 4: Select suggested question
             print_substep("Step 3.5: Selecting HR question...")
+            target_question = "What is the vacation policy for employees in Sweden vs Germany?"
             for attempt in range(3):
                 try:
-                    # Try to find and click the selectbox
-                    # The question is: "What is the vacation policy for employees in Sweden vs Germany?"
-                    selectbox = page.locator('label:has-text("Suggested question")').locator('..').locator('select').first
+                    # Use role-based locator to find the combobox/selectbox
+                    # Look for the selectbox near "Suggested question" label
+                    selectbox_container = page.locator('div').filter(has_text="Suggested question").locator('select').first
                     
-                    # Get all options to find the HR question
-                    options = selectbox.locator('option').all()
+                    # Get all options to find the exact HR question
+                    options = selectbox_container.locator('option').all()
+                    question_found = False
                     for option in options:
                         text = option.text_content()
-                        if text and "vacation policy" in text.lower():
+                        if text and target_question in text:
                             option_value = option.get_attribute('value') or text
-                            selectbox.select_option(value=option_value)
-                            page.wait_for_timeout(500)
-                            print_substep("  ✓ Selected HR question")
+                            selectbox_container.select_option(value=option_value)
+                            page.wait_for_timeout(800)
+                            print_substep(f"  ✓ Selected HR question: {target_question}")
+                            question_found = True
                             break
+                    
+                    if not question_found:
+                        # Try selecting by label text with category prefix
+                        try:
+                            selectbox_container.select_option(label=f"[hr] {target_question}")
+                            page.wait_for_timeout(800)
+                            print_substep("  ✓ Selected HR question by label")
+                            question_found = True
+                        except Exception:
+                            # Last resort: search for "vacation policy"
+                            for option in options:
+                                text = option.text_content()
+                                if text and "vacation policy" in text.lower():
+                                    option_value = option.get_attribute('value') or text
+                                    selectbox_container.select_option(value=option_value)
+                                    page.wait_for_timeout(800)
+                                    print_substep("  ✓ Selected vacation policy question")
+                                    question_found = True
+                                    break
+                    
+                    if question_found:
+                        break
                     else:
-                        # Try by label
-                        selectbox.select_option(label="[hr] What is the vacation policy for employees in Sweden vs Germany?")
-                        page.wait_for_timeout(500)
-                        print_substep("  ✓ Selected HR question")
-                    break
+                        raise Exception("Target question not found in options")
+                        
                 except Exception as e:
                     if attempt == 2:
-                        # Last attempt - try any available method
+                        # Last attempt - try first available demo question
                         print_substep(f"  ⚠ Could not select specific question, trying first available...")
                         try:
-                            selectbox = page.locator('label:has-text("Suggested question")').locator('..').locator('select').first
-                            selectbox.select_option(index=1)  # Select first non-empty option
-                            page.wait_for_timeout(500)
+                            selectbox_container = page.locator('div').filter(has_text="Suggested question").locator('select').first
+                            selectbox_container.select_option(index=1)  # Select first non-empty option
+                            page.wait_for_timeout(800)
                             print_substep("  ✓ Selected first available question")
                         except Exception:  # Catch Playwright errors
                             raise Exception(f"Failed to select question: {e}")
@@ -307,7 +331,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 try:
                     insert_btn = page.get_by_role("button", name="Insert question", exact=True)
                     insert_btn.click(timeout=5000)
-                    page.wait_for_timeout(1000)
+                    page.wait_for_timeout(800)
                     print_substep("  ✓ Question inserted")
                     break
                 except Exception as e:
@@ -327,7 +351,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                         send_btn = page.get_by_role("button", name="Send", exact=True)
                         send_btn.click(timeout=5000)
                     
-                    page.wait_for_timeout(1000)
+                    page.wait_for_timeout(800)
                     print_substep("  ✓ Question submitted")
                     break
                 except Exception as e:
@@ -356,7 +380,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 raise Exception("Answer did not appear within 60s")
             
             # Wait for UI to settle
-            page.wait_for_timeout(2000)
+            page.wait_for_timeout(1500)
             
             # Screenshot 2: Answer in chat
             print_substep("Step 3.9: Capturing screenshot 2 (Answer)...")
@@ -379,7 +403,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 if sources_found:
                     # Scroll to make sources visible
                     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    page.wait_for_timeout(1000)
+                    page.wait_for_timeout(800)
                     print_substep("  ✓ Sources section visible")
                 else:
                     print_substep("  ℹ Sources section not explicitly found (may be inline citations)")
@@ -404,7 +428,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
             # Find and rename video file
             print_substep("Processing video file...")
             video_temp_dir = output_dir / 'video_temp'
-            video_files = list(video_temp_dir.glob('*.webm'))
+            video_files = list(video_temp_dir.glob('*.webm')) + list(video_temp_dir.glob('*.mp4'))
             
             if video_files:
                 video_file = video_files[0]
