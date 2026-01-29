@@ -311,6 +311,7 @@ def main():
         config_values['top_k'] = demo_overrides['top_k']
         config_values['chunk_size'] = demo_overrides['chunk_size']
         config_values['chunk_overlap'] = demo_overrides['chunk_overlap']
+        config_values['citations_enabled'] = demo_overrides['citations_enabled']
     
     # Render indexed files in sidebar
     render_indexed_files(st.session_state.indexed_files)
@@ -337,7 +338,18 @@ def main():
     if st.session_state.demo_loaded:
         render_demo_indicator(True)
     
+    # Indexed files section (main content)
+    st.markdown("---")
+    st.subheader("Indexed files")
+    if st.session_state.indexed_files:
+        for filename in st.session_state.indexed_files:
+            st.text(f"• {filename}")
+        st.caption(f"Total: {len(st.session_state.indexed_files)} files")
+    else:
+        st.info("No files indexed yet. Upload documents or load demo data to get started.")
+    
     # File upload section
+    st.markdown("---")
     st.subheader("📤 Upload Documents")
     uploaded_files = st.file_uploader(
         "Choose files",

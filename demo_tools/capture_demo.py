@@ -18,6 +18,10 @@ from pathlib import Path
 from datetime import datetime
 import requests
 import psutil
+from dotenv import load_dotenv
+
+# Load .env file if present (don't require it)
+load_dotenv()
 
 # Configuration constants
 STREAMLIT_PORT = 8501
