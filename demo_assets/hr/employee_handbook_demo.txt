@@ -1,0 +1,188 @@
+ACME CORPORATION
+EMPLOYEE HANDBOOK
+Fictional Company - Demo Version
+
+===================
+TABLE OF CONTENTS
+===================
+1. Vacation Policy
+2. Sick Leave
+3. Remote Work Policy
+4. Employee Benefits
+5. Expense Policy
+
+
+===================
+1. VACATION POLICY
+===================
+
+Annual Vacation Entitlement:
+
+SWEDEN EMPLOYEES:
+- All full-time employees in Sweden receive 25 vacation days per year
+- Vacation days accrue monthly at a rate of 2.08 days per month
+- Employees must take at least 4 consecutive weeks during the summer period (June-August)
+- Unused vacation days can be carried over to the next year (max 5 days)
+- Part-time employees receive pro-rated vacation days based on their working hours
+
+GERMANY EMPLOYEES:
+- All full-time employees in Germany receive 30 vacation days per year
+- Vacation days accrue monthly at a rate of 2.5 days per month
+- No mandatory summer vacation period required
+- Unused vacation days expire on March 31st of the following year
+- Part-time employees receive pro-rated vacation days based on their working hours
+
+OTHER LOCATIONS:
+- Employees in other locations follow local labor law requirements
+- Minimum of 20 vacation days per year for all full-time employees
+- Consult with HR for specific country requirements
+
+Requesting Vacation:
+- Submit vacation requests through the company portal at least 2 weeks in advance
+- Manager approval required for all vacation requests
+- Peak business periods (November-December) may have restricted vacation availability
+
+
+===================
+2. SICK LEAVE POLICY
+===================
+
+Sick Days:
+- All employees receive 10 paid sick days per year
+- Unused sick days do not carry over to the next year
+- Medical certificate required for absences longer than 3 consecutive days
+
+Short-Term Illness (1-5 days):
+- Notify your manager within 2 hours of your scheduled start time
+- No medical documentation required for up to 3 days
+- Use company sick leave system to log absence
+
+Long-Term Illness (6+ days):
+- Medical certificate required from day 6 onwards
+- Submit certificate to HR within 7 days of absence
+- Company provides 100% salary continuation for up to 6 weeks
+- After 6 weeks, statutory sick pay applies (varies by country)
+
+Return to Work:
+- Coordinate with your manager before returning from extended sick leave
+- Medical clearance may be required for certain types of illness
+
+
+===================
+3. REMOTE WORK POLICY
+===================
+
+Eligibility:
+- Available to all employees whose roles permit remote work
+- Manager approval required
+- Probationary employees (first 3 months) must work from office
+
+Remote Work Options:
+- Full-time remote: Work from home 5 days per week
+- Hybrid: Work from home 2-3 days per week, office 2-3 days
+- Flexible: Ad-hoc remote work as needed with manager approval
+
+Requirements:
+- Reliable high-speed internet connection (minimum 50 Mbps)
+- Dedicated workspace free from distractions
+- Available during core business hours (9:00 AM - 3:00 PM local time)
+- Attend all mandatory in-person meetings and team events
+
+Equipment:
+- Company provides laptop and necessary software
+- Employees may request monitor, keyboard, mouse (one-time provision)
+- Home office stipend: €50 per month for full-time remote workers
+
+Communication:
+- Respond to emails within 4 business hours
+- Available on company chat platform during working hours
+- Video on for all team meetings
+
+
+===================
+4. EMPLOYEE BENEFITS
+===================
+
+Health Insurance:
+- Company provides comprehensive health insurance for all full-time employees
+- Coverage begins on first day of employment
+- Family coverage available with employee contribution
+- Dental and vision coverage included in premium plan
+
+Retirement Benefits:
+- Company contributes 5% of base salary to retirement plan
+- Employee can contribute additional amount (pre-tax)
+- Matching contribution up to 3% of employee contribution
+- Vesting period: 2 years
+
+Professional Development:
+- Annual learning budget: €1,500 per employee
+- Can be used for courses, certifications, conferences
+- Manager approval required
+- Submit receipts to HR for reimbursement within 60 days
+
+Wellness Programs:
+- Gym membership reimbursement: up to €50 per month
+- Mental health support: 6 free counseling sessions per year
+- Annual health screening provided at company expense
+- Wellness days: 2 additional paid days per year for wellness activities
+
+Life Insurance:
+- Company provides life insurance coverage equal to 2x annual salary
+- Additional coverage available for purchase
+- Beneficiary designation required within first 30 days
+
+
+===================
+5. EXPENSE POLICY
+===================
+
+Business Expenses:
+- All business-related expenses must be pre-approved by manager
+- Submit expense reports within 30 days of expense date
+- Receipts required for all expenses over €25
+- Late submissions may be denied
+
+Travel Expenses:
+
+Flight Bookings:
+- Economy class for flights under 6 hours
+- Business class for flights over 6 hours
+- Book through company travel portal for best rates
+- Last-minute bookings require VP approval
+
+Accommodation:
+- Maximum €150 per night for hotels in major cities
+- Maximum €100 per night for hotels in other locations
+- Book through company travel portal when possible
+- Extended stays (5+ nights) may qualify for apartment rental
+
+Meals and Entertainment:
+- Daily meal allowance: €50 per day when traveling
+- Client entertainment: up to €100 per person with manager approval
+- Alcohol: maximum 2 drinks per person, must include food
+- Tips: standard local percentage (15-20%)
+
+Ground Transportation:
+- Public transportation preferred
+- Taxi/ride-share: reasonable cost based on distance
+- Car rental: compact or mid-size only, requires manager approval
+- Personal vehicle: reimbursement at €0.35 per kilometer
+
+Office Supplies:
+- Order through company procurement system
+- Personal items (coffee, snacks) not reimbursable
+- Technology purchases require IT approval
+- Ergonomic equipment approved on case-by-case basis
+
+
+===================
+CONTACT INFORMATION
+===================
+
+HR Department: hr@acmecorp.demo
+IT Support: support@acmecorp.demo
+Benefits Questions: benefits@acmecorp.demo
+
+This handbook is for demonstration purposes only.
+All policies, names, and details are entirely fictional.

@@ -1,0 +1,296 @@
+RESIDENTIAL LEASE AGREEMENT
+Fictional Document - Demo Version
+
+===================
+PARTIES
+===================
+
+LANDLORD: Metropolitan Property Management LLC
+Address: 123 Main Street, Suite 500, Demo City, DC 12345
+Contact: leasing@metroprop.demo
+
+TENANT: [Tenant Name]
+Address: [Current Address]
+Contact: [Tenant Email/Phone]
+
+PROPERTY ADDRESS: 456 Oak Avenue, Apt 3B, Demo City, DC 12346
+
+
+===================
+LEASE TERM
+===================
+
+Start Date: January 1, 2024
+End Date: December 31, 2024
+Lease Duration: 12 months
+
+This lease automatically converts to a month-to-month tenancy upon expiration unless either party provides written notice of non-renewal at least 60 days prior to the end date.
+
+
+===================
+RENT AND PAYMENT TERMS
+===================
+
+Monthly Rent: $2,400.00
+Due Date: 1st day of each month
+Late Fee: $75.00 if rent is not received by the 5th day of the month
+Payment Methods: 
+- Online portal (preferred)
+- Check payable to Metropolitan Property Management LLC
+- Bank transfer to account provided
+
+Rent Increases:
+Landlord may increase rent with 60 days written notice. Rent increases are limited to 5% per year in accordance with local regulations.
+
+
+===================
+SECURITY DEPOSIT
+===================
+
+Amount: $4,800.00 (equivalent to 2 months rent)
+Due: Before move-in date
+Held: In separate escrow account at First Demo Bank
+
+Conditions for Return:
+- Property returned in original condition (normal wear and tear excepted)
+- All rent and utilities paid in full
+- No damage beyond normal use
+- Professional cleaning completed
+- 14-day written notice provided before move-out
+
+Deposit Return Timeline:
+Landlord will inspect property within 7 days of move-out and return deposit (less any valid deductions) within 30 days, along with an itemized statement of any deductions.
+
+
+===================
+TERMINATION NOTICE PERIOD
+===================
+
+Tenant Termination:
+- During lease term: 60 days written notice required
+- If breaking lease early, tenant responsible for rent until new tenant found or lease end date (whichever comes first)
+- Early termination fee: 2 months rent if notice is less than 60 days
+- Notice must be submitted via certified mail or email with read receipt
+
+Landlord Termination:
+- During lease term: Only for cause (non-payment, lease violation, property sale)
+- Month-to-month tenancy: 90 days written notice required
+- Property sale: 120 days notice required to allow tenant first right of refusal
+
+Notice Requirements:
+All notices must be in writing and delivered via:
+- Certified mail with return receipt
+- Email with read receipt confirmation
+- Hand delivery with signed acknowledgment
+
+
+===================
+PROPERTY INSURANCE REQUIREMENTS
+===================
+
+LANDLORD'S INSURANCE:
+Landlord maintains property insurance covering:
+- Building structure and common areas
+- Liability for property-related incidents
+- Fire and natural disaster coverage
+
+FLOOD INSURANCE:
+The property is located in a FEMA-designated flood zone X (minimal flood risk). Landlord maintains flood insurance coverage for the building structure as required by the mortgage lender. This policy covers structural damage to the building but DOES NOT cover tenant's personal belongings in case of flood damage.
+
+TENANT'S INSURANCE (REQUIRED):
+Tenant MUST obtain and maintain renter's insurance throughout the lease term with minimum coverage:
+- Personal property: $30,000
+- Liability: $100,000
+- Loss of use: $10,000
+- Flood coverage for personal property: STRONGLY RECOMMENDED but not required
+
+Proof of insurance must be provided to landlord:
+- Within 14 days of lease signing
+- Upon each policy renewal
+- Insurance must name landlord as additional interested party
+
+Failure to maintain insurance:
+First violation: Written warning
+Second violation: $100 per month fee until insurance obtained
+Continued violation: Grounds for lease termination
+
+
+===================
+MAINTENANCE RESPONSIBILITIES
+===================
+
+LANDLORD RESPONSIBILITIES:
+- Structural repairs (roof, walls, foundation)
+- HVAC system maintenance and repairs
+- Plumbing and electrical system repairs
+- Appliance repairs (provided appliances only)
+- Common area maintenance
+- Pest control (unless caused by tenant negligence)
+- Exterior painting and maintenance
+- Snow removal from common areas and walkways
+
+Landlord Emergency Contact: (555) 123-4567 (24/7)
+Non-Emergency Repairs: Submit via online portal
+
+Response Times:
+- Emergency repairs (no heat, water, gas leak): Within 4 hours
+- Urgent repairs (broken appliance, plumbing issues): Within 48 hours
+- Non-urgent repairs: Within 7 business days
+
+TENANT RESPONSIBILITIES:
+- Light bulb replacement
+- Air filter changes (monthly)
+- Drain clogs (unless caused by structural issue)
+- Minor wall repairs and touch-up painting
+- Cleaning gutters (if applicable)
+- Lawn care and snow removal from assigned areas
+- Damage caused by tenant or guests
+- Pest control if infestation caused by tenant negligence
+
+Tenant Maintenance Obligations:
+- Report all maintenance issues within 48 hours of discovery
+- Provide access for repairs during reasonable hours (24 hours notice required except emergencies)
+- Prevent damage from occurring due to negligence
+
+
+===================
+UTILITIES AND SERVICES
+===================
+
+Included in Rent:
+- Water and sewer
+- Trash removal
+- Building common area maintenance
+
+Tenant Responsibility (Separate Billing):
+- Electricity: Demo Electric Company (555) 234-5678
+- Gas/Heating: Demo Gas Service (555) 345-6789
+- Internet/Cable: Tenant's choice of provider
+- Phone: Tenant's choice of provider
+
+Tenant must:
+- Transfer utilities to tenant's name within 3 days of move-in
+- Maintain utility service throughout lease term
+- Provide final utility bills upon move-out
+
+
+===================
+SPECIAL CONDITIONS AND CLAUSES
+===================
+
+Pets:
+- Dogs and cats permitted with approval
+- Pet deposit: $500 per pet (non-refundable)
+- Maximum 2 pets
+- Weight limit: 40 pounds per pet
+- Aggressive breeds not permitted
+- Proof of vaccinations and pet registration required
+
+Smoking:
+- Property is 100% non-smoking
+- Smoking permitted only in designated outdoor areas
+- $500 cleaning fee for smoking violations
+- Repeated violations may result in lease termination
+
+Subletting:
+- Subletting permitted with written landlord approval
+- Minimum sublease term: 3 months
+- Sublease agreement must comply with master lease terms
+- Original tenant remains responsible for rent and property condition
+
+Parking:
+- One assigned parking space included
+- Additional parking: $100 per month per space (if available)
+- Guest parking: Limited spaces on first-come basis
+- No commercial vehicles or RVs permitted
+
+Alterations:
+- Painting: Permitted with neutral colors, must repaint to original color upon move-out
+- Mounting: Picture hanging permitted with small nails/hooks
+- Fixtures: No permanent fixtures without written approval
+- Flooring: No changes permitted
+- Security system: Must be professional installation, removal required at move-out
+
+Noise and Conduct:
+- Quiet hours: 10:00 PM - 8:00 AM on weekdays, 11:00 PM - 9:00 AM on weekends
+- Complaints will be addressed according to building rules
+- Excessive noise violations may result in lease termination
+
+
+===================
+ENTRY AND INSPECTION
+===================
+
+Landlord Right of Entry:
+- Routine maintenance: 48 hours written notice
+- Emergency repairs: Immediate entry permitted
+- Property inspections: 7 days written notice (quarterly maximum)
+- Showing to prospective tenants/buyers: 48 hours notice (only in final 60 days of lease)
+
+Tenant Rights:
+- Tenant may be present during inspections
+- Reasonable hours only (9:00 AM - 6:00 PM) except emergencies
+- Lockbox installation requires tenant consent
+
+
+===================
+LEASE VIOLATIONS AND REMEDIES
+===================
+
+Common Violations:
+- Late rent payment: Late fee applied
+- Unauthorized pets: $200 fine per incident, pet must be removed
+- Noise violations: Written warning, then $100 fine per violation
+- Smoking inside: $500 fine, repeat violations lead to termination
+- Property damage: Repair costs charged to tenant
+
+Landlord Remedies:
+- First violation: Written warning
+- Second violation: Monetary fine as specified
+- Third violation: Notice to cure or quit (14 days)
+- Continued violations: Lease termination and eviction proceedings
+
+Tenant Remedies:
+- Landlord failure to maintain: Written notice with 14 days to cure
+- Uninhabitable conditions: Right to withhold rent (must follow legal procedures)
+- Illegal entry: Tenant may change locks and seek damages
+
+
+===================
+SIGNATURES
+===================
+
+This agreement is executed on this date: ________________
+
+LANDLORD:
+Metropolitan Property Management LLC
+
+Signature: _________________________
+Name: John Smith, Property Manager
+Date: _____________________________
+
+
+TENANT:
+
+Signature: _________________________
+Name: _____________________________
+Date: _____________________________
+
+
+Witness:
+
+Signature: _________________________
+Name: _____________________________
+Date: _____________________________
+
+
+===================
+IMPORTANT NOTICES
+===================
+
+This lease agreement is for demonstration purposes only.
+All parties, addresses, terms, and conditions are entirely fictional.
+This document should not be used as an actual legal agreement.
+
+For real estate legal documents, always consult with a qualified attorney
+and use jurisdiction-appropriate forms.
