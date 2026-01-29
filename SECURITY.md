@@ -6,6 +6,33 @@
 
 The codebase has been scanned with CodeQL static analysis and no security alerts were detected.
 
+## Dependency Vulnerabilities - PATCHED
+
+### Previously Identified Issues (NOW FIXED)
+
+**1. XML External Entity (XXE) Vulnerability** ✅ PATCHED
+- **Package**: langchain-community
+- **Affected versions**: < 0.3.27
+- **Fixed in**: 0.3.27
+- **Current version**: 0.3.27 ✅
+- **Status**: **RESOLVED**
+
+**2. Pickle Deserialization Vulnerability** ✅ PATCHED
+- **Package**: langchain-community
+- **Affected versions**: < 0.2.4
+- **Fixed in**: 0.2.4
+- **Current version**: 0.3.27 ✅
+- **Status**: **RESOLVED**
+
+### Updated Dependency Versions
+
+All LangChain dependencies have been updated to secure, patched versions:
+- `langchain==0.3.27` (was 0.1.20)
+- `langchain-openai==0.2.11` (was 0.1.1)
+- `langchain-community==0.3.27` (was 0.0.38)
+
+**Verification**: GitHub Advisory Database check completed - **No vulnerabilities found**.
+
 ## Security Best Practices Implemented
 
 ### 1. Secrets Management
