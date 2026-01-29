@@ -392,6 +392,10 @@ def perform_playwright_automation(output_dir: Path) -> bool:
             page.screenshot(path=str(output_dir / "03_sources.png"))
             print_substep("  ✓ Screenshot 3 saved")
             
+            # Wait 2 seconds before closing to ensure clean video ending
+            print_substep("Waiting 2 seconds before closing...")
+            page.wait_for_timeout(2000)
+            
             # Close to save video
             print_substep("Closing browser to save video...")
             context.close()
