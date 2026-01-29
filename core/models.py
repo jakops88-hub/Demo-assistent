@@ -9,6 +9,7 @@ from langchain.chat_models.base import BaseChatModel
 
 from core.config import Config
 from core.logging_utils import get_logger
+from core.offline_embeddings import ResilientEmbeddings
 
 logger = get_logger(__name__)
 
@@ -62,26 +63,29 @@ class ModelFactory:
     
     def create_embeddings(self, provider: Optional[str] = None) -> Embeddings:
         """
-        Create embeddings model based on provider.
+        Create embeddings model based on provider with offline fallback.
         
         Args:
             provider: Model provider (openai or ollama). Uses config default if None.
             
         Returns:
-            Embeddings instance
+            Embeddings instance with offline fallback support
         """
         provider = provider or self.config.model_provider
         
         if provider == 'openai':
-            logger.info(f"Creating OpenAI embeddings: {self.config.openai_embeddings_model}")
-            return OpenAIEmbeddings(
+            logger.info(f"Creating OpenAI embeddings with offline fallback: {self.config.openai_embeddings_model}")
+            primary = OpenAIEmbeddings(
                 model=self.config.openai_embeddings_model,
                 api_key=self.config.openai_api_key
             )
+            # Wrap with resilient fallback
+            return ResilientEmbeddings(primary, dimension=1536)
         elif provider == 'ollama':
             logger.info(f"Creating Ollama embeddings: {self.config.ollama_embeddings_model}")
             try:
                 from langchain_community.embeddings import OllamaEmbeddings
+                # Ollama is local, no need for fallback
                 return OllamaEmbeddings(
                     model=self.config.ollama_embeddings_model
                 )
