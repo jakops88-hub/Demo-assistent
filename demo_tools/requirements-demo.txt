@@ -1,0 +1,5 @@
+# Demo automation dependencies
+playwright==1.42.0
+requests==2.31.0
+psutil==5.9.8
+python-dotenv==1.0.1
