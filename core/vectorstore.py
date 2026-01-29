@@ -72,8 +72,7 @@ class VectorStore:
             logger.info(f"Adding {len(documents)} documents to vector store")
             ids = self._store.add_documents(documents)
             
-            # Persist changes
-            self._store.persist()
+            # Note: Chroma 0.4.x auto-persists, no manual persist needed
             
             logger.info(f"Successfully added {len(ids)} documents")
             return ids
@@ -151,12 +150,14 @@ class VectorStore:
         try:
             logger.info("Clearing vector store")
             
-            # Delete the collection and recreate
+            # Get all document IDs
             collection = self._store._collection
-            collection.delete()
+            all_data = collection.get()
             
-            # Reinitialize
-            self._initialize_store()
+            if all_data and 'ids' in all_data and all_data['ids']:
+                # Delete all documents by their IDs
+                collection.delete(ids=all_data['ids'])
+                logger.info(f"Deleted {len(all_data['ids'])} documents")
             
             logger.info("Vector store cleared")
         

@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import Config
 from core.vectorstore import VectorStore
 from langchain.schema import Document
-from langchain.embeddings.fake import FakeEmbeddings
+from langchain_community.embeddings.fake import FakeEmbeddings
 
 
 @pytest.fixture
