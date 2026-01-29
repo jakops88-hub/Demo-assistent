@@ -54,8 +54,9 @@ Solution: Follow Step 2 above to create a .env file with your API key
 
 Problem: "Port 8501 already in use"
 Solution: Another app is using that port. Close other Streamlit apps
-          Or kill the process using: taskkill /F /IM streamlit.exe (Windows)
-          Or: pkill -f streamlit (macOS/Linux)
+          Windows: Find process: netstat -ano | findstr :8501
+                   Then: taskkill /F /PID [number]
+          macOS/Linux: pkill -f streamlit
 
 NEED MORE HELP?
 ---------------

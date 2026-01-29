@@ -30,8 +30,12 @@ def wait_for_server(url, timeout=30, interval=1):
         except (urllib.error.URLError, urllib.error.HTTPError):
             # Server not ready yet, wait and retry
             time.sleep(interval)
-        except Exception:
-            # Other errors, wait and retry
+        except OSError as e:
+            # Network-related errors (connection refused, etc.)
+            time.sleep(interval)
+        except Exception as e:
+            # Log unexpected errors but continue trying
+            print(f"Unexpected error while checking server: {e}")
             time.sleep(interval)
     
     return False

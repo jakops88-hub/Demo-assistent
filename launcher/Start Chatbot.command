@@ -117,11 +117,20 @@ echo ""
 echo "Checking configuration..."
 if [ -f ".env" ]; then
     echo "[OK] Found .env file"
-    # Load environment variables
-    export $(grep -v '^#' .env | xargs)
+    # Load environment variables safely
+    set -a
+    source .env
+    set +a
 else
-    # Check if OpenAI provider is configured
-    if [ -f "config/config.example.yaml" ] && grep -q 'provider: "openai"' config/config.example.yaml; then
+    # Check if OpenAI provider is configured in actual config or example
+    CONFIG_FILE=""
+    if [ -f "config/config.yaml" ]; then
+        CONFIG_FILE="config/config.yaml"
+    elif [ -f "config/config.example.yaml" ]; then
+        CONFIG_FILE="config/config.example.yaml"
+    fi
+    
+    if [ -n "$CONFIG_FILE" ] && grep -q 'provider: "openai"' "$CONFIG_FILE"; then
         echo "[WARNING] No .env file found!"
         echo ""
         echo "If you're using OpenAI, you need to:"

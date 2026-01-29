@@ -95,12 +95,16 @@ if not exist ".venv\.requirements_hash" (
 ) else (
     REM Compare requirements.txt hash
     certutil -hashfile requirements.txt MD5 > .venv\.requirements_hash_new 2>nul
-    fc .venv\.requirements_hash .venv\.requirements_hash_new >nul 2>&1
-    if !ERRORLEVEL! NEQ 0 (
+    if !ERRORLEVEL! EQU 0 (
+        fc /b .venv\.requirements_hash .venv\.requirements_hash_new >nul 2>&1
+        if !ERRORLEVEL! NEQ 0 (
+            set NEED_INSTALL=1
+            echo Requirements changed - will update dependencies...
+        )
+        del .venv\.requirements_hash_new >nul 2>&1
+    ) else (
         set NEED_INSTALL=1
-        echo Requirements changed - will update dependencies...
     )
-    del .venv\.requirements_hash_new >nul 2>&1
 )
 
 REM Install/update dependencies if needed
@@ -128,8 +132,13 @@ echo Checking configuration...
 if exist ".env" (
     echo [OK] Found .env file
 ) else (
-    if exist "config\config.example.yaml" (
-        findstr /C:"provider: \"openai\"" config\config.example.yaml >nul 2>&1
+    REM Check if a config.yaml exists (not just the example)
+    set CONFIG_FILE=
+    if exist "config\config.yaml" set CONFIG_FILE=config\config.yaml
+    if "!CONFIG_FILE!"=="" if exist "config\config.example.yaml" set CONFIG_FILE=config\config.example.yaml
+    
+    if not "!CONFIG_FILE!"=="" (
+        findstr /C:"provider: \"openai\"" "!CONFIG_FILE!" >nul 2>&1
         if !ERRORLEVEL! EQU 0 (
             echo [WARNING] No .env file found!
             echo.

@@ -53,32 +53,25 @@ def check_dependencies():
     print("="*50)
     
     required_packages = [
-        'streamlit',
-        'langchain',
-        'chromadb',
-        'pypdf',
-        'python-docx',
-        'dotenv'
+        ('streamlit', 'streamlit'),
+        ('langchain', 'langchain'),
+        ('chromadb', 'chromadb'),
+        ('pypdf', 'pypdf'),
+        ('python-docx', 'docx'),
+        ('python-dotenv', 'dotenv')
     ]
     
     missing = []
     installed = []
     
-    for package in required_packages:
-        # Handle package name differences
-        import_name = package
-        if package == 'python-docx':
-            import_name = 'docx'
-        elif package == 'dotenv':
-            import_name = 'dotenv'
-            
+    for package_name, import_name in required_packages:
         try:
             __import__(import_name)
-            installed.append(package)
-            print(f"✓ {package}")
+            installed.append(package_name)
+            print(f"✓ {package_name}")
         except ImportError:
-            missing.append(package)
-            print(f"✗ {package} (NOT INSTALLED)")
+            missing.append(package_name)
+            print(f"✗ {package_name} (NOT INSTALLED)")
     
     if missing:
         print(f"\n{len(missing)} package(s) missing!")
