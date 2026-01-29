@@ -64,5 +64,6 @@ tmp/
 temp/
 *.tmp
 
-# Demo automation outputs
-demo_tools/output/
+# Demo automation outputs (but keep README)
+demo_tools/output/*
+!demo_tools/output/README.md
