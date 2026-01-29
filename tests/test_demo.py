@@ -47,6 +47,18 @@ def test_demo_assets():
     for key, value in overrides.items():
         print(f"  - {key}: {value}")
     
+    # Verify required overrides are present
+    required_overrides = ['temperature', 'top_k', 'chunk_size', 'chunk_overlap', 'citations_enabled']
+    for key in required_overrides:
+        if key not in overrides:
+            print(f"\n✗ Missing required override: {key}")
+            return False
+    
+    # Verify citations are enabled
+    if overrides.get('citations_enabled') != True:
+        print(f"\n✗ citations_enabled should be True, got {overrides.get('citations_enabled')}")
+        return False
+    
     return True
 
 
