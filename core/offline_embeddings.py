@@ -15,6 +15,10 @@ class OfflineFallbackEmbeddings(Embeddings):
     """
     Simple offline embeddings that use character-based hashing.
     This is a fallback for when network-based embeddings fail.
+    
+    Note: Hash-based embeddings have limited semantic similarity compared to 
+    trained models. They work best for exact or near-exact text matches.
+    This is intentional for demo/offline fallback purposes.
     """
     
     def __init__(self, dimension: int = 1536):
@@ -61,6 +65,7 @@ class OfflineFallbackEmbeddings(Embeddings):
                 chunk = hash_bytes[i:i+8]
                 value = int.from_bytes(chunk, byteorder='big', signed=False)
                 # Normalize to [-1, 1]
+                # Maps: 0 -> -1, 2^64-1 -> 1
                 normalized = (value / (2**64 - 1)) * 2 - 1
                 embedding.append(normalized)
         

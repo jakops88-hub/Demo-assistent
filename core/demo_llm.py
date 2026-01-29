@@ -211,6 +211,9 @@ I'm here to help you find specific information from these documents."""
 class ResilientChatModel(SimpleChatModel):
     """
     Chat model wrapper that tries real API first, falls back to demo mode.
+    
+    Note: Once fallback is activated, it remains in demo mode for the session.
+    This ensures consistent demo behavior without API retry overhead.
     """
     
     model_name: str = "resilient-chat"
@@ -259,9 +262,6 @@ class ResilientChatModel(SimpleChatModel):
                 'authentication',
                 'unauthorized',
                 '401',
-                'invalid',
-                'incorrect',
-                'dummy-key',
                 'connection',
                 'network',
                 'timeout',
