@@ -204,8 +204,8 @@ def render_demo_mode_controls(demo_questions: Dict[str, List[str]]) -> dict:
             )
         with col2:
             demo_state['force_reindex'] = st.button(
-                "Force re-index",
-                help="Force re-index",
+                "🔄",
+                help="Force re-index demo documents",
                 use_container_width=True,
                 key="force_reindex_demo"
             )
