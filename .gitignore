@@ -67,3 +67,6 @@ temp/
 # Demo automation outputs (but keep README)
 demo_tools/output/*
 !demo_tools/output/README.md
+
+# Demo capture intermediate files
+demo/video/*.webm
