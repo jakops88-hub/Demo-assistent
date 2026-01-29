@@ -23,6 +23,7 @@ from app.ui_components import (
     render_chat_message,
     render_demo_mode_controls,
     render_demo_indicator,
+    render_status_indicator,
     show_success,
     show_error,
     show_info,
@@ -77,6 +78,9 @@ def initialize_session_state():
     
     if 'pending_question' not in st.session_state:
         st.session_state.pending_question = None
+    
+    if 'indexing_in_progress' not in st.session_state:
+        st.session_state.indexing_in_progress = False
 
 
 def initialize_components(provider: str):
@@ -326,6 +330,9 @@ def main():
     st.title("📚 Document Chatbot")
     st.markdown("Upload documents and ask questions about them!")
     
+    # Show status indicator
+    render_status_indicator(st.session_state.demo_loaded, st.session_state.indexing_in_progress)
+    
     # Show demo indicator if demo is loaded
     if st.session_state.demo_loaded:
         render_demo_indicator(True)
@@ -373,12 +380,12 @@ def main():
     
     # Chat section
     st.markdown("---")
-    st.subheader("💬 Chat")
+    st.subheader("Chat")
     
     # Display chat history
     render_chat_history(st.session_state.messages)
     
-    # Chat input - use text_area if there's a pending question, otherwise use chat_input
+    # Chat input - use text_input with Send button
     if st.session_state.pending_question:
         # Show the pending question in an editable text area
         col1, col2 = st.columns([5, 1])
@@ -405,13 +412,26 @@ def main():
                 st.session_state.pending_question = None
                 st.rerun()
     else:
-        # Normal chat input
-        if prompt := st.chat_input("Ask a question about your documents..."):
+        # Normal chat input with text_input and Send button
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            prompt = st.text_input(
+                "Ask a question",
+                value="",
+                key="chat_input_field",
+                placeholder="Type your question here..."
+            )
+        with col2:
+            st.write("")  # Spacing for alignment
+            send_clicked = st.button("Send", type="primary", use_container_width=True)
+        
+        if send_clicked and prompt.strip():
             handle_chat_input(
                 prompt,
                 config_values['top_k'],
                 config_values['citations_enabled']
             )
+            st.rerun()
 
 
 if __name__ == "__main__":

@@ -43,6 +43,8 @@ def test_format_citations_with_pages():
     assert "pages" in citations.lower()
     # Should show range 1-3
     assert "1–3" in citations or "1-3" in citations
+    # Should be plain text list format
+    assert "•" in citations
 
 
 def test_format_citations_without_pages():
@@ -64,6 +66,8 @@ def test_format_citations_without_pages():
     assert "data.csv" in citations
     # Should not have "pages" for these file types
     assert "pages" not in citations.lower()
+    # Should be plain text list format
+    assert "•" in citations
 
 
 def test_format_citations_mixed():
@@ -84,6 +88,8 @@ def test_format_citations_mixed():
     assert "paper.pdf" in citations
     assert "notes.txt" in citations
     assert "page 5" in citations.lower() or "pages 5" in citations.lower()
+    # Should be plain text list format
+    assert "•" in citations
 
 
 def test_format_citations_multiple_files_with_pages():
@@ -120,9 +126,10 @@ def test_create_sources_section():
     
     sources = create_sources_section(documents)
     
-    assert sources.startswith("\n\n---\n\n")
-    assert "Sources" in sources or "sources" in sources
+    assert "Sources" in sources
     assert "test.pdf" in sources
+    # Should be plain text format
+    assert "•" in sources
 
 
 def test_create_sources_section_empty():

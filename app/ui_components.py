@@ -86,9 +86,10 @@ def render_sidebar_actions() -> dict:
     st.sidebar.subheader("⚙️ Actions")
     
     reindex = st.sidebar.button(
-        "🔄 Re-index Documents",
+        "Force re-index",
         help="Clear and re-index all documents",
-        use_container_width=True
+        use_container_width=True,
+        key="sidebar_force_reindex"
     )
     
     clear_chat = st.sidebar.button(
@@ -112,7 +113,7 @@ def render_indexed_files(filenames: List[str]):
     """
     if filenames:
         st.sidebar.markdown("---")
-        st.sidebar.subheader("📁 Indexed Files")
+        st.sidebar.subheader("Indexed files")
         for filename in filenames:
             st.sidebar.text(f"• {filename}")
         st.sidebar.caption(f"Total: {len(filenames)} files")
@@ -196,15 +197,17 @@ def render_demo_mode_controls(demo_questions: Dict[str, List[str]]) -> dict:
         col1, col2 = st.sidebar.columns([3, 1])
         with col1:
             demo_state['load_clicked'] = st.button(
-                "📥 Load demo documents",
+                "Load demo documents",
                 help="Index demo documents (HR, Legal, Commerce)",
-                use_container_width=True
+                use_container_width=True,
+                key="load_demo_docs"
             )
         with col2:
             demo_state['force_reindex'] = st.button(
-                "🔄",
+                "Force re-index",
                 help="Force re-index",
-                use_container_width=True
+                use_container_width=True,
+                key="force_reindex_demo"
             )
         
         # Suggested questions
@@ -218,9 +221,8 @@ def render_demo_mode_controls(demo_questions: Dict[str, List[str]]) -> dict:
                     all_questions.append(f"[{category}] {q}")
             
             selected = st.sidebar.selectbox(
-                "Select a question",
+                "Suggested question",
                 options=[""] + all_questions,
-                label_visibility="collapsed",
                 help="Choose a demo question to ask"
             )
             
@@ -228,7 +230,7 @@ def render_demo_mode_controls(demo_questions: Dict[str, List[str]]) -> dict:
                 demo_state['selected_question'] = selected.split("] ", 1)[1] if "] " in selected else selected
                 
                 demo_state['insert_clicked'] = st.sidebar.button(
-                    "💬 Insert question",
+                    "Insert question",
                     help="Insert selected question into chat input",
                     use_container_width=True
                 )
@@ -245,3 +247,25 @@ def render_demo_indicator(demo_loaded: bool):
     """
     if demo_loaded:
         st.info("🎬 **Demo data loaded** - Using sample documents for demonstration", icon="ℹ️")
+
+
+def render_status_indicator(demo_loaded: bool, indexing: bool = False) -> str:
+    """
+    Render status text area showing system state.
+    
+    Args:
+        demo_loaded: Whether demo data is loaded
+        indexing: Whether indexing is in progress
+        
+    Returns:
+        Status text string
+    """
+    if indexing:
+        status = "Indexing demo data..."
+    elif demo_loaded:
+        status = "Demo data loaded"
+    else:
+        status = "Index ready"
+    
+    st.text(status)
+    return status
