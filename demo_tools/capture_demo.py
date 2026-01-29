@@ -19,6 +19,10 @@ from datetime import datetime
 import requests
 import psutil
 
+# Configuration constants
+STREAMLIT_PORT = 8501
+STREAMLIT_URL = f"http://localhost:{STREAMLIT_PORT}"
+
 
 def print_step(step_num: int, message: str):
     """Print a numbered step message."""
@@ -66,7 +70,7 @@ def start_streamlit(repo_root: Path) -> subprocess.Popen:
     env = os.environ.copy()
     env['STREAMLIT_BROWSER_GATHER_USAGE_STATS'] = 'false'
     env['STREAMLIT_SERVER_HEADLESS'] = 'true'
-    env['STREAMLIT_SERVER_PORT'] = '8501'
+    env['STREAMLIT_SERVER_PORT'] = str(STREAMLIT_PORT)
     
     # Start Streamlit
     app_path = repo_root / 'app' / 'app.py'
@@ -74,7 +78,7 @@ def start_streamlit(repo_root: Path) -> subprocess.Popen:
         sys.executable, '-m', 'streamlit', 'run',
         str(app_path),
         '--server.headless', 'true',
-        '--server.port', '8501'
+        '--server.port', str(STREAMLIT_PORT)
     ]
     
     print_substep(f"Command: {' '.join(cmd)}")
@@ -103,12 +107,11 @@ def wait_for_streamlit_ready(timeout: int = 60) -> bool:
     """
     print_step(2, "Waiting for Streamlit to be ready...")
     
-    url = "http://localhost:8501"
     start_time = time.time()
     
     while time.time() - start_time < timeout:
         try:
-            response = requests.get(url, timeout=5)
+            response = requests.get(STREAMLIT_URL, timeout=5)
             if response.status_code == 200 and 'streamlit' in response.text.lower():
                 elapsed = time.time() - start_time
                 print_substep(f"Streamlit is ready! (took {elapsed:.1f}s)")
@@ -146,7 +149,7 @@ def stop_process_tree(pid: int):
         # Force stop any remaining
         for p in alive:
             try:
-                p.terminate()
+                p.kill()  # Use kill for processes that didn't terminate
             except psutil.NoSuchProcess:
                 pass
         
@@ -155,7 +158,7 @@ def stop_process_tree(pid: int):
             parent.terminate()
             parent.wait(timeout=3)
         except psutil.TimeoutExpired:
-            parent.terminate()
+            parent.kill()  # Use kill instead of terminate on timeout
         except psutil.NoSuchProcess:
             pass
             
@@ -197,8 +200,8 @@ def perform_playwright_automation(output_dir: Path) -> bool:
             page = context.new_page()
             
             # Navigate to app
-            print_substep("Navigating to http://localhost:8501...")
-            page.goto("http://localhost:8501", timeout=30000)
+            print_substep(f"Navigating to {STREAMLIT_URL}...")
+            page.goto(STREAMLIT_URL, timeout=30000)
             page.wait_for_timeout(3000)
             
             # Step 1: Enable demo mode
@@ -238,7 +241,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                         page.get_by_text("Indexed files").is_visible(timeout=500)):
                         print_substep("  ✓ Indexing complete!")
                         break
-                except:
+                except Exception:  # Catch Playwright timeout and other exceptions
                     pass
                 
                 if attempt == 239:
@@ -290,7 +293,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                             selectbox.select_option(index=1)  # Select first non-empty option
                             page.wait_for_timeout(500)
                             print_substep("  ✓ Selected first available question")
-                        except:
+                        except Exception:  # Catch Playwright errors
                             raise Exception(f"Failed to select question: {e}")
                     page.wait_for_timeout(1000)
             
@@ -316,7 +319,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                     try:
                         ask_btn = page.get_by_role("button", name="Ask", exact=True)
                         ask_btn.click(timeout=5000)
-                    except:
+                    except Exception:  # Catch Playwright errors, try Send button
                         send_btn = page.get_by_role("button", name="Send", exact=True)
                         send_btn.click(timeout=5000)
                     
@@ -340,7 +343,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                         answer_appeared = True
                         print_substep("  ✓ Answer appeared!")
                         break
-                except:
+                except Exception:  # Catch Playwright errors
                     pass
                 
                 time.sleep(0.5)
@@ -366,7 +369,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 try:
                     if page.get_by_text("Sources").is_visible(timeout=2000) or page.get_by_text("source").is_visible(timeout=1000):
                         sources_found = True
-                except:
+                except Exception:  # Catch Playwright timeout errors
                     pass
                 
                 if sources_found:
@@ -409,8 +412,8 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                     if result.returncode == 0:
                         print_substep(f"  ✓ Video converted to MP4: demo.mp4")
                     else:
-                        raise Exception("ffmpeg conversion failed")
-                except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+                        raise subprocess.CalledProcessError(result.returncode, 'ffmpeg')
+                except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
                     # If ffmpeg not available or failed, just rename .webm to .mp4
                     shutil.copy(video_file, target_video)
                     print_substep(f"  ✓ Video saved: demo.mp4 (webm format)")
@@ -437,7 +440,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 if error_elements:
                     error_texts = [elem.text_content() for elem in error_elements]
                     print(f"\n🔍 Visible error messages: {error_texts}")
-            except:
+            except Exception:  # Catch any errors during debug screenshot capture
                 pass
         
         return False

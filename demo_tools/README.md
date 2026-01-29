@@ -182,14 +182,14 @@ Edit `capture_demo.py` and modify the `output_dir` variable in the `main()` func
 
 If your system is slower, increase timeouts in `capture_demo.py`:
 - `wait_for_streamlit_ready(timeout=60)` - Streamlit startup
-- Indexing wait loop (line ~190) - Document indexing
-- Answer wait loop (line ~270) - Answer generation
+- Indexing wait loop (line 236) - Document indexing
+- Answer wait loop (line 337) - Answer generation
 
 ### Headless Mode
 
 The browser runs in headless mode by default. To see the browser (for debugging):
 
-Edit `capture_demo.py`, line ~180:
+Edit `capture_demo.py`, line 195:
 ```python
 browser = p.chromium.launch(headless=False)  # Changed to False
 ```
