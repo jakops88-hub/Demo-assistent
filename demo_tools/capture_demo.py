@@ -14,6 +14,7 @@ import sys
 import time
 import subprocess
 import shutil
+import re
 from pathlib import Path
 from datetime import datetime
 import requests
@@ -214,7 +215,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 try:
                     demo_checkbox = page.get_by_role("checkbox", name="Demo mode")
                     demo_checkbox.check(timeout=5000)
-                    page.wait_for_timeout(800)
+                    page.wait_for_timeout(1000)  # Smooth transition for video
                     print_substep("  ✓ Demo mode enabled")
                     break
                 except Exception as e:
@@ -228,7 +229,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 try:
                     load_btn = page.get_by_role("button", name="Load demo documents", exact=True)
                     load_btn.click(timeout=5000)
-                    page.wait_for_timeout(800)
+                    page.wait_for_timeout(1000)  # Smooth transition for video
                     print_substep("  ✓ Clicked Load demo documents")
                     break
                 except Exception as e:
@@ -258,77 +259,104 @@ def perform_playwright_automation(output_dir: Path) -> bool:
             # Wait for UI to settle
             page.wait_for_timeout(1000)
             
-            # Screenshot 1: Indexed files visible
+            # Screenshot 1: Indexed files visible (improved scrolling)
             print_substep("Step 3.4: Capturing screenshot 1 (Indexed files)...")
-            # Scroll to ensure indexed files section is visible
+            # Ensure sidebar is visible and scroll to top
             page.evaluate("window.scrollTo(0, 0)")
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(1200)  # Extra settling time for layout
             page.screenshot(path=str(output_dir / "01_indexed_files.png"))
             print_substep("  ✓ Screenshot 1 saved")
             
-            # Step 4: Select suggested question
+            # Step 4: Select suggested question (Streamlit selectbox = combobox)
             print_substep("Step 3.5: Selecting HR question...")
-            target_question = "What is the vacation policy for employees in Sweden vs Germany?"
+            target_question = "vacation policy"  # Search term
+            selection_successful = False
+            
             for attempt in range(3):
                 try:
-                    # Find the selectbox using text-based filter locator
-                    # Note: We use a text filter because the selectbox doesn't have a proper role attribute
-                    selectbox_container = page.locator('div').filter(has_text="Suggested question").locator('select').first
+                    print_substep(f"  Attempt {attempt + 1}/3 to select question...")
                     
-                    # Strategy 1: Try to find option with exact target question
-                    options = selectbox_container.locator('option').all()
-                    question_found = False
-                    for option in options:
-                        text = option.text_content()
-                        if text and target_question in text:
-                            option_value = option.get_attribute('value') or text
-                            selectbox_container.select_option(value=option_value)
-                            page.wait_for_timeout(800)
-                            print_substep(f"  ✓ Selected HR question: {target_question}")
-                            question_found = True
-                            break
-                    
-                    if question_found:
-                        break
-                    
-                    # Strategy 2: Try selecting by label text with category prefix
+                    # Strategy 1: Use combobox role (Streamlit's selectbox implementation)
                     try:
-                        selectbox_container.select_option(label=f"[hr] {target_question}")
+                        combobox = page.get_by_role("combobox", name="Suggested question")
+                        print_substep("  Found combobox, clicking to open dropdown...")
+                        combobox.click(timeout=5000)
                         page.wait_for_timeout(800)
-                        print_substep("  ✓ Selected HR question by label")
-                        break
-                    except Exception:
-                        pass
-                    
-                    # Strategy 3: Search for partial match with "vacation policy"
-                    for option in options:
-                        text = option.text_content()
-                        if text and "vacation policy" in text.lower():
-                            option_value = option.get_attribute('value') or text
-                            selectbox_container.select_option(value=option_value)
-                            page.wait_for_timeout(800)
-                            print_substep("  ✓ Selected vacation policy question")
-                            break
-                    else:
-                        # No match found, raise exception to trigger retry
-                        raise Exception("Target question not found in options")
-                    
-                    # If we reach here, strategy 3 succeeded
-                    break
                         
+                        # Try to select the option by role
+                        try:
+                            option = page.get_by_role("option", name=re.compile(target_question, re.I))
+                            print_substep(f"  Found option containing '{target_question}', clicking...")
+                            option.click(timeout=3000)
+                            page.wait_for_timeout(800)
+                            print_substep("  ✓ Selected HR question (vacation policy)")
+                            selection_successful = True
+                            break
+                        except Exception as e:
+                            print_substep(f"  Option role not found: {e}")
+                            # Fallback: Type the search term
+                            print_substep("  Trying keyboard fallback...")
+                            page.keyboard.type(target_question)
+                            page.wait_for_timeout(500)
+                            page.keyboard.press("Enter")
+                            page.wait_for_timeout(800)
+                            
+                            # Verify selection by checking combobox value
+                            combobox_text = combobox.text_content() or combobox.input_value()
+                            if target_question.lower() in combobox_text.lower():
+                                print_substep("  ✓ Selected question via keyboard input")
+                                selection_successful = True
+                                break
+                            else:
+                                raise Exception("Keyboard fallback did not select correctly")
+                    
+                    except Exception as combobox_error:
+                        print_substep(f"  Combobox strategy failed: {combobox_error}")
+                        
+                        # Strategy 2: Legacy fallback - try native select element
+                        # (in case Streamlit changes implementation)
+                        print_substep("  Trying legacy select element fallback...")
+                        selectbox = page.locator('div').filter(has_text="Suggested question").locator('select').first
+                        options = selectbox.locator('option').all()
+                        
+                        for option in options:
+                            text = option.text_content()
+                            if text and target_question in text.lower():
+                                option_value = option.get_attribute('value') or text
+                                selectbox.select_option(value=option_value)
+                                page.wait_for_timeout(800)
+                                print_substep("  ✓ Selected question via select element")
+                                selection_successful = True
+                                break
+                        
+                        if selection_successful:
+                            break
+                        else:
+                            raise Exception("No matching option found")
+                
                 except Exception as e:
                     if attempt == 2:
-                        # Last attempt - try first available demo question
-                        print_substep(f"  ⚠ Could not select specific question, trying first available...")
+                        print_substep(f"  ⚠ All strategies failed: {e}")
+                        # Last resort - try to click first available option
                         try:
-                            selectbox_container = page.locator('div').filter(has_text="Suggested question").locator('select').first
-                            selectbox_container.select_option(index=1)  # Select first non-empty option
+                            print_substep("  Last resort: trying first option...")
+                            combobox = page.get_by_role("combobox", name="Suggested question")
+                            combobox.click(timeout=5000)
+                            page.wait_for_timeout(500)
+                            # Click first option
+                            first_option = page.get_by_role("option").first
+                            first_option.click(timeout=3000)
                             page.wait_for_timeout(800)
                             print_substep("  ✓ Selected first available question")
-                            break
-                        except Exception:  # Catch Playwright errors
-                            raise Exception(f"Failed to select question: {e}")
-                    page.wait_for_timeout(1000)
+                            selection_successful = True
+                        except Exception as last_error:
+                            raise Exception(f"Failed all selection strategies: {last_error}")
+                    else:
+                        print_substep(f"  Retry after error: {e}")
+                        page.wait_for_timeout(1000)
+            
+            if not selection_successful:
+                raise Exception("Failed to select question after all attempts")
             
             # Step 5: Click "Insert question"
             print_substep("Step 3.6: Inserting question...")
@@ -336,7 +364,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 try:
                     insert_btn = page.get_by_role("button", name="Insert question", exact=True)
                     insert_btn.click(timeout=5000)
-                    page.wait_for_timeout(800)
+                    page.wait_for_timeout(1000)  # Smooth transition for video
                     print_substep("  ✓ Question inserted")
                     break
                 except Exception as e:
@@ -344,40 +372,94 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                         raise Exception(f"Failed to insert question: {e}")
                     page.wait_for_timeout(1000)
             
-            # Step 6: Verify question text is in input and click Ask/Send
+            # Step 6: Submit question - handle both pending and normal modes
             print_substep("Step 3.7: Submitting question...")
+            page.wait_for_timeout(500)  # Small wait for UI to update after insert
+            
             for attempt in range(3):
                 try:
-                    # Look for Ask or Send button
+                    # Check for pending question mode (textarea + "Ask" button)
+                    pending_mode = False
+                    question_text = ""
+                    
                     try:
+                        # Look for pending question textarea
+                        textarea = page.get_by_label("Edit and press Ask to submit:", exact=True)
+                        if textarea.is_visible(timeout=1000):
+                            pending_mode = True
+                            question_text = textarea.input_value()
+                            print_substep("  Detected pending question mode (textarea + Ask)")
+                    except Exception:
+                        pass
+                    
+                    if not pending_mode:
+                        # Normal mode - check text_input
+                        try:
+                            text_input = page.get_by_label("Ask a question", exact=True)
+                            if text_input.is_visible(timeout=1000):
+                                question_text = text_input.input_value()
+                                print_substep("  Detected normal mode (text_input + Send)")
+                        except Exception:
+                            pass
+                    
+                    # Verify non-empty text
+                    if not question_text or not question_text.strip():
+                        raise Exception("No question text found in input")
+                    
+                    print_substep(f"  Question text present: {question_text[:50]}...")
+                    
+                    # Click appropriate button
+                    if pending_mode:
                         ask_btn = page.get_by_role("button", name="Ask", exact=True)
                         ask_btn.click(timeout=5000)
-                    except Exception:  # Catch Playwright errors, try Send button
+                        print_substep("  ✓ Clicked Ask button (pending mode)")
+                    else:
                         send_btn = page.get_by_role("button", name="Send", exact=True)
                         send_btn.click(timeout=5000)
+                        print_substep("  ✓ Clicked Send button (normal mode)")
                     
                     page.wait_for_timeout(800)
-                    print_substep("  ✓ Question submitted")
+                    print_substep("  ✓ Question submitted successfully")
                     break
+                    
                 except Exception as e:
                     if attempt == 2:
-                        raise Exception(f"Failed to submit question: {e}")
+                        raise Exception(f"Failed to submit question after 3 attempts: {e}")
+                    print_substep(f"  Retry after error: {e}")
                     page.wait_for_timeout(1000)
             
-            # Step 7: Wait for answer to appear
+            # Step 7: Wait for answer to appear - improved detection
             print_substep("Step 3.8: Waiting for answer (up to 60s)...")
             answer_appeared = False
+            
             for attempt in range(120):  # 60 seconds with 0.5s intervals
                 try:
-                    # Check if assistant message appeared in chat
-                    # Look for common answer patterns
+                    # Strategy 1: Count chat messages (need at least 2: user + assistant)
                     chat_messages = page.locator('[data-testid="stChatMessage"]').count()
                     if chat_messages >= 2:
-                        answer_appeared = True
-                        print_substep("  ✓ Answer appeared!")
-                        break
-                except Exception:  # Catch Playwright errors
+                        # Verify the last message has substantial content (not just loading)
+                        last_message = page.locator('[data-testid="stChatMessage"]').last
+                        message_text = last_message.text_content()
+                        if message_text and len(message_text) > 50:
+                            answer_appeared = True
+                            print_substep(f"  ✓ Answer appeared! ({chat_messages} messages, {len(message_text)} chars)")
+                            break
+                    
+                    # Strategy 2: Look for assistant role specifically
+                    assistant_messages = page.locator('[data-testid="stChatMessage"]').filter(has_text="assistant")
+                    if assistant_messages.count() > 0:
+                        assistant_text = assistant_messages.last.text_content()
+                        if assistant_text and len(assistant_text) > 50:
+                            answer_appeared = True
+                            print_substep(f"  ✓ Assistant answer detected ({len(assistant_text)} chars)")
+                            break
+                
+                except Exception:
                     pass
+                
+                # Progress indicator every 10 seconds
+                if attempt > 0 and attempt % 20 == 0:
+                    print_substep(f"  Still waiting... ({attempt // 2}s elapsed)")
                 
                 time.sleep(0.5)
             
@@ -387,37 +469,56 @@ def perform_playwright_automation(output_dir: Path) -> bool:
             # Wait for UI to settle
             page.wait_for_timeout(1500)
             
-            # Screenshot 2: Answer in chat
+            # Screenshot 2: Answer in chat (improved scrolling)
             print_substep("Step 3.9: Capturing screenshot 2 (Answer)...")
+            # Scroll to show the chat area with both question and answer
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(1200)  # Extra settling time
             page.screenshot(path=str(output_dir / "02_answer.png"))
             print_substep("  ✓ Screenshot 2 saved")
             
-            # Step 8: Scroll to Sources section if present
+            # Step 8: Look for Sources section (improved detection)
             print_substep("Step 3.10: Looking for Sources section...")
             try:
-                # Try to find Sources section or citations
                 sources_found = False
+                
+                # Try multiple detection strategies
                 try:
-                    if page.get_by_text("Sources").is_visible(timeout=2000) or page.get_by_text("source").is_visible(timeout=1000):
+                    # Strategy 1: Look for "Sources" header
+                    if page.get_by_text("Sources", exact=True).is_visible(timeout=2000):
                         sources_found = True
-                except Exception:  # Catch Playwright timeout errors
+                        print_substep("  ✓ Found 'Sources' header")
+                except Exception:
                     pass
                 
+                if not sources_found:
+                    try:
+                        # Strategy 2: Look for source citations (inline or section)
+                        if page.get_by_text(re.compile(r"source|citation|reference", re.I)).is_visible(timeout=1000):
+                            sources_found = True
+                            print_substep("  ✓ Found source/citation references")
+                    except Exception:
+                        pass
+                
                 if sources_found:
-                    # Scroll to make sources visible
+                    # Scroll to ensure sources are visible
                     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                     page.wait_for_timeout(800)
-                    print_substep("  ✓ Sources section visible")
                 else:
-                    print_substep("  ℹ Sources section not explicitly found (may be inline citations)")
+                    print_substep("  ℹ No explicit Sources section found (may be inline citations)")
+                    # Still scroll to bottom to capture whatever is there
+                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    page.wait_for_timeout(800)
+                    
             except Exception as e:
-                print_substep(f"  ⚠ Could not locate sources: {e}")
+                print_substep(f"  ⚠ Error detecting sources: {e}")
+                # Continue anyway - scroll to bottom
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                page.wait_for_timeout(800)
             
-            # Screenshot 3: Sources visible  
+            # Screenshot 3: Sources visible (improved settling time)
             print_substep("Step 3.11: Capturing screenshot 3 (Sources)...")
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(1200)  # Extra settling time
             page.screenshot(path=str(output_dir / "03_sources.png"))
             print_substep("  ✓ Screenshot 3 saved")
             
@@ -430,7 +531,7 @@ def perform_playwright_automation(output_dir: Path) -> bool:
             context.close()
             browser.close()
             
-            # Find and rename video file
+            # Find and process video file
             print_substep("Processing video file...")
             video_temp_dir = output_dir / 'video_temp'
             video_files = list(video_temp_dir.glob('*.webm')) + list(video_temp_dir.glob('*.mp4'))
@@ -439,24 +540,46 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                 video_file = video_files[0]
                 target_video = output_dir / 'demo.mp4'
                 
-                # Try to convert to mp4 if ffmpeg is available
+                # Check if ffmpeg is available
+                ffmpeg_available = False
                 try:
                     result = subprocess.run(
-                        ['ffmpeg', '-i', str(video_file), '-y', str(target_video)],
+                        ['ffmpeg', '-version'],
                         capture_output=True,
-                        timeout=30
+                        timeout=5
                     )
-                    if result.returncode == 0:
-                        print_substep(f"  ✓ Video converted to MP4: demo.mp4")
-                    else:
-                        raise subprocess.CalledProcessError(result.returncode, 'ffmpeg')
-                except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
-                    # If ffmpeg not available or failed, just rename .webm to .mp4
+                    ffmpeg_available = (result.returncode == 0)
+                except (subprocess.TimeoutExpired, FileNotFoundError):
+                    ffmpeg_available = False
+                
+                if ffmpeg_available:
+                    # Convert webm to mp4 with ffmpeg
+                    print_substep("  ffmpeg detected, converting to MP4...")
+                    try:
+                        result = subprocess.run(
+                            ['ffmpeg', '-i', str(video_file), '-y', '-c:v', 'libx264', '-preset', 'fast', str(target_video)],
+                            capture_output=True,
+                            timeout=60
+                        )
+                        if result.returncode == 0:
+                            print_substep(f"  ✓ Video converted to MP4: demo.mp4")
+                        else:
+                            raise subprocess.CalledProcessError(result.returncode, 'ffmpeg')
+                    except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+                        print_substep(f"  ⚠ ffmpeg conversion failed: {e}")
+                        # Fallback to copying
+                        shutil.copy(video_file, target_video)
+                        print_substep(f"  ✓ Video saved as MP4 container (webm format): demo.mp4")
+                else:
+                    # No ffmpeg - copy webm to mp4 (playable in most browsers)
+                    print_substep("  ffmpeg not available, copying as MP4 container...")
                     shutil.copy(video_file, target_video)
-                    print_substep(f"  ✓ Video saved: demo.mp4 (webm format)")
+                    print_substep(f"  ✓ Video saved: demo.mp4 (webm in mp4 container)")
+                    print_substep(f"  ℹ Install ffmpeg for proper MP4 conversion")
                 
                 # Clean up temp directory
                 shutil.rmtree(video_temp_dir)
+                print_substep("  ✓ Temp video folder removed")
             else:
                 print_substep("  ⚠ Warning: No video file found")
             
