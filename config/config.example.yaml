@@ -1,0 +1,25 @@
+project_name: "Document Chatbot"
+storage_dir: "./data"
+
+vectorstore:
+  type: "chroma"
+  persist_dir: "./data/chroma"
+
+chunking:
+  chunk_size: 900
+  chunk_overlap: 150
+
+retrieval:
+  top_k: 5
+
+models:
+  provider: "openai"   # openai | ollama
+  openai:
+    chat_model: "gpt-4o-mini"
+    embeddings_model: "text-embedding-3-small"
+  ollama:
+    chat_model: "llama3"
+    embeddings_model: "nomic-embed-text"
+
+features:
+  citations: true
