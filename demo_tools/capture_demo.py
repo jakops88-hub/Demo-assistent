@@ -285,7 +285,6 @@ def perform_playwright_automation(output_dir: Path) -> bool:
                         
                         # Try to select the option by role
                         try:
-                            import re
                             option = page.get_by_role("option", name=re.compile(target_question, re.I))
                             print_substep(f"  Found option containing '{target_question}', clicking...")
                             option.click(timeout=3000)
