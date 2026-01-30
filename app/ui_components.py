@@ -206,6 +206,40 @@ def inject_custom_css():
         color: #475569;
     }
     
+    /* Fix focus outline to purple accent instead of red */
+    .stButton button:focus,
+    .stButton button:focus-visible {
+        outline: 2px solid #6366f1 !important;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+    }
+    
+    .stTextInput input:focus,
+    .stTextInput input:focus-visible,
+    [data-testid="stTextInput"] input:focus,
+    [data-testid="stTextInput"] input:focus-visible {
+        border-color: #6366f1 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+    }
+    
+    .stSelectbox [data-testid="stSelectbox"]:focus-within,
+    .stNumberInput input:focus,
+    .stTextArea textarea:focus {
+        border-color: #6366f1 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+    }
+    
+    /* Override Streamlit's default red focus ring */
+    *:focus {
+        outline-color: #6366f1 !important;
+    }
+    
+    *:focus-visible {
+        outline-color: #6366f1 !important;
+    }
+    
     /* Hide sidebar by default for clean two-pane layout */
     section[data-testid="stSidebar"] {
         display: none;

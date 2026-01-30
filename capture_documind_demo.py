@@ -202,6 +202,10 @@ def capture_demo():
     SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
     VIDEO_DIR.mkdir(parents=True, exist_ok=True)
     
+    # The specific question to use per requirements
+    DEMO_QUESTION = "What is the vacation policy?"
+    EXPECTED_DOC_COUNT = 3  # 3 demo docs expected
+    
     try:
         with sync_playwright() as p:
             # Launch browser with video recording
@@ -217,6 +221,24 @@ def capture_demo():
             print_info(f"Opening {STREAMLIT_URL}...")
             page.goto(STREAMLIT_URL, timeout=30000)
             page.wait_for_timeout(3000)
+            
+            # VERIFICATION 1: Verify page title shows 'DocuMind'
+            print_info("Verifying page title contains 'DocuMind'...")
+            page_title = page.title()
+            if "DocuMind" not in page_title:
+                print_info(f"✗ Page title '{page_title}' does not contain 'DocuMind'")
+                return False
+            print_info(f"✓ Page title verified: '{page_title}'")
+            
+            # Also verify DocuMind logo/header is visible
+            try:
+                documind_header = page.locator("text=DocuMind").first
+                if documind_header.is_visible(timeout=5000):
+                    print_info("✓ DocuMind header visible on page")
+                else:
+                    print_info("⚠ DocuMind header not visible")
+            except Exception:
+                print_info("⚠ Could not verify DocuMind header")
             
             # Screenshot 1: Home/Dashboard
             print_info("Capturing 01-home.png (Dashboard)")
@@ -241,24 +263,57 @@ def capture_demo():
             page.screenshot(path=str(SCREENSHOTS_DIR / "02-uploads.png"))
             
             # Load demo documents if available
-            print_info("Loading documents...")
+            print_info("Loading demo documents...")
+            doc_count = 0
             try:
-                load_btn = page.get_by_role("button", name="Load demo documents", exact=True)
+                # Try "Load demo data" button first (new UI)
+                load_btn = page.get_by_role("button", name="Load demo data")
+                if not load_btn.is_visible(timeout=2000):
+                    # Fallback to "Load demo documents" button
+                    load_btn = page.get_by_role("button", name="Load demo documents", exact=True)
+                
                 if load_btn.is_visible(timeout=3000):
                     load_btn.click()
                     page.wait_for_timeout(2000)
                     print_info("✓ Demo documents loading...")
                     
-                    # Wait for indexing
+                    # Wait for indexing to complete
                     for i in range(INDEXING_TIMEOUT_SECONDS):
                         try:
                             if (page.get_by_text("Demo documents indexed").is_visible(timeout=500) or
+                                page.get_by_text("Successfully indexed").is_visible(timeout=500) or
                                 page.get_by_text("Indexed files").is_visible(timeout=500)):
                                 print_info("✓ Documents indexed")
                                 break
                         except Exception:
                             pass
                         time.sleep(1)
+                    
+                    # VERIFICATION 2: Verify 3 demo docs are indexed
+                    page.wait_for_timeout(2000)
+                    try:
+                        # Look for document items in the list
+                        doc_items = page.locator(".doc-item, .doc-name, [class*='doc']").all()
+                        doc_count = len(doc_items)
+                        
+                        # Alternative: count by looking for "Total: X document(s)" text
+                        total_text = page.get_by_text("Total:")
+                        if total_text.is_visible(timeout=1000):
+                            total_content = total_text.text_content()
+                            print_info(f"Document count info: {total_content}")
+                            # Extract number from "Total: 3 document(s)"
+                            import re
+                            match = re.search(r'(\d+)', total_content)
+                            if match:
+                                doc_count = int(match.group(1))
+                        
+                        if doc_count >= EXPECTED_DOC_COUNT:
+                            print_info(f"✓ Verified {doc_count} documents indexed (expected: {EXPECTED_DOC_COUNT})")
+                        else:
+                            print_info(f"⚠ Found {doc_count} documents, expected {EXPECTED_DOC_COUNT}")
+                    except Exception as e:
+                        print_info(f"⚠ Could not verify document count: {e}")
+                        
             except Exception as e:
                 print_info(f"Could not load demo documents: {e}")
             
@@ -267,26 +322,24 @@ def capture_demo():
             page.wait_for_timeout(2000)
             page.screenshot(path=str(SCREENSHOTS_DIR / "03-uploaded.png"))
             
-            # Select and insert question
-            print_info("Selecting a question...")
+            # Type the specific question "What is the vacation policy?"
+            print_info(f"Typing question: '{DEMO_QUESTION}'...")
             try:
-                # Try to select from suggested questions
-                combobox = page.get_by_role("combobox", name="Suggested question")
-                if combobox.is_visible(timeout=3000):
-                    combobox.click()
-                    page.wait_for_timeout(500)
-                    # Select first option
-                    first_option = page.get_by_role("option").first
-                    first_option.click()
-                    page.wait_for_timeout(800)
-                    
-                    # Insert question
-                    insert_btn = page.get_by_role("button", name="Insert question")
-                    insert_btn.click()
+                # Find the chat input field
+                chat_input = page.get_by_placeholder("Ask about your documents...")
+                if not chat_input.is_visible(timeout=3000):
+                    # Try alternative selectors
+                    chat_input = page.locator('[data-testid="stTextInput"] input').first
+                
+                if chat_input.is_visible(timeout=3000):
+                    chat_input.click()
+                    chat_input.fill(DEMO_QUESTION)
                     page.wait_for_timeout(1000)
-                    print_info("✓ Question inserted")
+                    print_info(f"✓ Question typed: '{DEMO_QUESTION}'")
+                else:
+                    print_info("⚠ Could not find chat input field")
             except Exception as e:
-                print_info(f"Could not select question: {e}")
+                print_info(f"Could not type question: {e}")
             
             # Screenshot 4: Question typed
             print_info("Capturing 04-chat-question.png (Question typed)")
@@ -296,17 +349,16 @@ def capture_demo():
             # Submit question
             print_info("Submitting question...")
             try:
-                # Try Ask button first (pending mode)
-                try:
-                    ask_btn = page.get_by_role("button", name="Ask", exact=True)
-                    if ask_btn.is_visible(timeout=2000):
-                        ask_btn.click()
-                        print_info("✓ Question submitted (Ask)")
-                except Exception:
-                    # Try Send button (normal mode)
-                    send_btn = page.get_by_role("button", name="Send", exact=True)
+                # Try Send button
+                send_btn = page.get_by_role("button", name="Send", exact=True)
+                if send_btn.is_visible(timeout=2000):
                     send_btn.click()
                     print_info("✓ Question submitted (Send)")
+                else:
+                    # Try pressing Enter
+                    chat_input = page.get_by_placeholder("Ask about your documents...")
+                    chat_input.press("Enter")
+                    print_info("✓ Question submitted (Enter)")
                 
                 page.wait_for_timeout(1000)
                 
@@ -334,21 +386,64 @@ def capture_demo():
             page.wait_for_timeout(1500)
             page.screenshot(path=str(SCREENSHOTS_DIR / "05-chat-answer.png"))
             
-            # Screenshot 6: Settings (try to open settings)
-            print_info("Capturing 06-settings.png (Settings)")
+            # Open Sources drawer (required per problem statement)
+            print_info("Opening Sources drawer...")
             try:
-                # Look for settings in sidebar
+                # Look for Sources button
+                sources_btn = page.get_by_role("button", name="Sources")
+                if not sources_btn.is_visible(timeout=2000):
+                    # Try alternative: button with "📚 Sources" text
+                    sources_btn = page.locator('button:has-text("Sources")').first
+                
+                if sources_btn.is_visible(timeout=3000):
+                    sources_btn.click()
+                    page.wait_for_timeout(2000)
+                    print_info("✓ Sources drawer opened")
+                else:
+                    print_info("⚠ Sources button not found")
+            except Exception as e:
+                print_info(f"Could not open Sources drawer: {e}")
+            
+            # Screenshot 6: Sources drawer open
+            print_info("Capturing 06-sources.png (Sources drawer)")
+            page.wait_for_timeout(1000)
+            page.screenshot(path=str(SCREENSHOTS_DIR / "06-sources.png"))
+            
+            # Screenshot 7: Settings (try to open settings)
+            print_info("Capturing 07-settings.png (Settings)")
+            try:
+                # Close sources first if open
+                close_btn = page.get_by_role("button", name="Close Sources")
+                if close_btn.is_visible(timeout=1000):
+                    close_btn.click()
+                    page.wait_for_timeout(500)
+                
+                # Look for settings button
+                settings_btn = page.get_by_role("button", name="Settings")
+                if settings_btn.is_visible(timeout=2000):
+                    settings_btn.click()
+                    page.wait_for_timeout(1000)
+                    print_info("✓ Settings opened")
+                
                 page.evaluate("window.scrollTo(0, 0)")
                 page.wait_for_timeout(1000)
             except Exception:
                 pass
-            page.screenshot(path=str(SCREENSHOTS_DIR / "06-settings.png"))
+            page.screenshot(path=str(SCREENSHOTS_DIR / "07-settings.png"))
             
-            # Screenshot 7: Back to home
-            print_info("Capturing 07-final.png (Back to home)")
+            # Screenshot 8: Back to home
+            print_info("Capturing 08-final.png (Back to home)")
+            try:
+                # Close settings if open
+                close_settings_btn = page.get_by_role("button", name="Close Settings")
+                if close_settings_btn.is_visible(timeout=1000):
+                    close_settings_btn.click()
+                    page.wait_for_timeout(500)
+            except Exception:
+                pass
             page.evaluate("window.scrollTo(0, 0)")
             page.wait_for_timeout(1500)
-            page.screenshot(path=str(SCREENSHOTS_DIR / "07-final.png"))
+            page.screenshot(path=str(SCREENSHOTS_DIR / "08-final.png"))
             
             # Wait a bit more for video
             print_info("Finalizing video recording...")
@@ -421,19 +516,20 @@ python -m playwright install chromium
 
 ## Demo Script
 
-The demo follows this narrative: **Start → Upload → Ask → Answer → Review → Settings → Return**
+The demo follows this narrative: **Start → Upload → Ask → Answer → Sources → Settings → Return**
 
-1. **Dashboard/Home** - Initial view of the DocuMind interface
+1. **Dashboard/Home** - Initial view of the DocuMind interface (verified title shows 'DocuMind')
 2. **Uploads** - Navigate to upload area (before upload)
-3. **Uploaded** - Documents appear in the list after upload/indexing
+3. **Uploaded** - Documents appear in the list after upload/indexing (verified 3 demo docs)
 4. **Chat Question** - Type and display a question about uploaded documents
 5. **Chat Answer** - AI-generated answer with context from documents
-6. **Settings** - Configuration options (model selection, retrieval parameters)
-7. **Final** - Return to main dashboard
+6. **Sources** - Sources drawer opened showing document citations
+7. **Settings** - Configuration options (model selection, retrieval parameters)
+8. **Final** - Return to main dashboard
 
 ### Sample Question Used
 ```
-"Summarize the key policies from the uploaded documents."
+"What is the vacation policy?"
 ```
 
 ## Screenshots
@@ -444,11 +540,12 @@ All screenshots are captured from the live running application while the dev ser
 |----------|-------------|
 | `01-home.png` | DocuMind home/dashboard view |
 | `02-uploads.png` | Uploads view before upload |
-| `03-uploaded.png` | Documents visible in list after indexing |
+| `03-uploaded.png` | Documents visible in list after indexing (3 demo docs) |
 | `04-chat-question.png` | Question typed in chat interface |
 | `05-chat-answer.png` | AI answer displayed with sources |
-| `06-settings.png` | Settings/configuration page |
-| `07-final.png` | Back to home/dashboard |
+| `06-sources.png` | Sources drawer open showing document citations |
+| `07-settings.png` | Settings/configuration page |
+| `08-final.png` | Back to home/dashboard |
 
 ### Screenshot Details
 - **Format**: PNG
@@ -471,13 +568,13 @@ All screenshots are captured from the live running application while the dev ser
 - **Content**: Complete workflow demonstration
 
 ### Video Workflow
-1. Start at dashboard
+1. Start at dashboard (verify page title shows 'DocuMind')
 2. Enable demo mode (if available)
-3. Load sample documents
+3. Load sample documents (verify 3 documents indexed)
 4. Wait for indexing to complete
-5. Select a sample question
+5. Type question: "What is the vacation policy?"
 6. Submit question and wait for AI response
-7. Review answer with source citations
+7. Open Sources drawer to review document citations
 8. Show settings/configuration
 9. Return to dashboard
 
