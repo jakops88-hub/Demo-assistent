@@ -25,4 +25,3 @@ pytest-cov==4.1.0
 
 # Browser automation for marketing assets
 playwright==1.41.2
-pytest-playwright==0.4.4

@@ -3,11 +3,11 @@
 Marketing Assets Generator for DocuMind Streamlit App
 Automatically generates screenshots and demo videos using Playwright.
 """
-import os
 import sys
 import time
-import signal
 import subprocess
+import traceback
+import urllib.request
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -48,19 +48,23 @@ def start_streamlit_app():
     max_retries = 30
     retry_count = 0
     
-    while retry_count < max_retries:
-        try:
-            import urllib.request
-            urllib.request.urlopen(STREAMLIT_URL, timeout=1)
-            print("✅ Streamlit server is ready!")
-            return process
-        except Exception:
-            retry_count += 1
-            time.sleep(1)
-    
-    # If we get here, server didn't start
-    process.kill()
-    raise RuntimeError("Failed to start Streamlit server")
+    try:
+        while retry_count < max_retries:
+            try:
+                urllib.request.urlopen(STREAMLIT_URL, timeout=1)
+                print("✅ Streamlit server is ready!")
+                return process
+            except (urllib.error.URLError, OSError):
+                retry_count += 1
+                time.sleep(1)
+        
+        # If we get here, server didn't start
+        process.kill()
+        raise RuntimeError("Failed to start Streamlit server")
+    except Exception:
+        # Ensure process is cleaned up on any error
+        process.kill()
+        raise
 
 
 def capture_marketing_assets(streamlit_process):
@@ -129,10 +133,15 @@ def capture_marketing_assets(streamlit_process):
     print("📝 Renaming video file...")
     video_files = list(ASSETS_DIR.glob("*.webm"))
     if video_files:
-        # Get the most recently created video file
-        latest_video = max(video_files, key=lambda p: p.stat().st_mtime)
-        if latest_video != VIDEO_PATH:
-            latest_video.rename(VIDEO_PATH)
+        # Get the most recently created video file (excluding the target file)
+        latest_video = max(
+            [v for v in video_files if v != VIDEO_PATH],
+            key=lambda p: p.stat().st_mtime,
+            default=None
+        )
+        if latest_video and latest_video != VIDEO_PATH:
+            # Use replace() to overwrite if exists
+            latest_video.replace(VIDEO_PATH)
         print(f"✅ Video saved to: {VIDEO_PATH}")
     else:
         print("⚠️  Warning: No video file found")
@@ -177,7 +186,6 @@ def main():
         
     except Exception as e:
         print(f"\n❌ Error: {e}")
-        import traceback
         traceback.print_exc()
         sys.exit(1)
         
