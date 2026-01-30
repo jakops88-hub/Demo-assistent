@@ -91,12 +91,11 @@ def capture_marketing_assets(streamlit_process):
             # Simulate user interaction
             print("👤 Simulating user interaction...")
             
-            # Locate the chat input box (Streamlit chat input)
-            # Streamlit chat_input creates a textarea element
-            chat_input_selector = 'textarea[data-testid="stChatInputTextArea"]'
+            # Locate the chat input box (it's an input element with aria-label="Message")
+            chat_input_selector = 'input[aria-label="Message"]'
             
             print("🔍 Looking for chat input...")
-            page.wait_for_selector(chat_input_selector, timeout=10000)
+            page.wait_for_selector(chat_input_selector, timeout=30000)
             
             # Type the message slowly to simulate human behavior
             print("⌨️  Typing message...")
