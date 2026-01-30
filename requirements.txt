@@ -22,3 +22,6 @@ pandas==2.2.1
 # Testing
 pytest==8.1.1
 pytest-cov==4.1.0
+
+# Browser automation for marketing assets
+playwright==1.41.2
