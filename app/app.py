@@ -1,5 +1,5 @@
 """
-Main Streamlit application for Document Chatbot.
+Main Streamlit application for DocuMind - Premium SaaS UI.
 """
 import streamlit as st
 import sys
@@ -16,14 +16,12 @@ from core.rag import RAGPipeline
 from core.logging_utils import get_logger
 from core.demo import DemoConfig
 from app.ui_components import (
-    render_sidebar_config,
-    render_sidebar_actions,
-    render_indexed_files,
-    render_chat_history,
-    render_chat_message,
-    render_demo_mode_controls,
-    render_demo_indicator,
-    render_status_indicator,
+    inject_custom_css,
+    render_header,
+    render_settings_modal,
+    render_documents_pane,
+    render_chat_pane,
+    render_sources_drawer,
     show_success,
     show_error,
     show_info,
@@ -34,10 +32,10 @@ logger = get_logger(__name__)
 
 # Page config
 st.set_page_config(
-    page_title="Document Chatbot",
-    page_icon="📚",
+    page_title="DocuMind - Ask your documents",
+    page_icon="💭",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Start with sidebar hidden
 )
 
 
@@ -51,7 +49,7 @@ def initialize_session_state():
             st.session_state.config = get_config()
             st.session_state.config.validate()
         except Exception as e:
-            st.error(f"Configuration error: {e}")
+            show_error(f"Configuration error: {e}", inline=False)
             st.stop()
     
     if 'embeddings' not in st.session_state:
@@ -76,11 +74,18 @@ def initialize_session_state():
     if 'demo_questions' not in st.session_state:
         st.session_state.demo_questions = {}
     
-    if 'pending_question' not in st.session_state:
-        st.session_state.pending_question = None
+    # UI state
+    if 'show_settings' not in st.session_state:
+        st.session_state.show_settings = False
     
-    if 'indexing_in_progress' not in st.session_state:
-        st.session_state.indexing_in_progress = False
+    if 'show_sources_for' not in st.session_state:
+        st.session_state.show_sources_for = None
+    
+    if 'show_upload_dialog' not in st.session_state:
+        st.session_state.show_upload_dialog = False
+    
+    if 'msg_count' not in st.session_state:
+        st.session_state.msg_count = 0
 
 
 def initialize_components(provider: str):
@@ -96,7 +101,8 @@ def initialize_components(provider: str):
             import os
             if not os.getenv('OPENAI_API_KEY'):
                 show_error(
-                    "⚠️ OPENAI_API_KEY not found. Please set it in your .env file or environment variables."
+                    "⚠️ OPENAI_API_KEY not found. Please set it in your .env file or environment variables.",
+                    inline=False
                 )
                 st.stop()
         
@@ -129,7 +135,7 @@ def initialize_components(provider: str):
         
     except Exception as e:
         logger.error(f"Error initializing components: {e}")
-        show_error(f"Error initializing application: {e}")
+        show_error(f"Error initializing application: {e}", inline=False)
         st.stop()
 
 
@@ -168,7 +174,7 @@ def handle_file_upload(uploaded_files, ingestor: DocumentIngestor):
                 if failed_files:
                     show_warning(f"⚠️ Failed to process {len(failed_files)} file(s):")
                     for filename, error in failed_files:
-                        st.warning(f"  • {filename}: {error}")
+                        st.text(f"  • {filename}: {error}")
             else:
                 show_warning("No documents were extracted from the uploaded files.")
     
@@ -177,37 +183,16 @@ def handle_file_upload(uploaded_files, ingestor: DocumentIngestor):
         show_error(f"Error processing files: {e}")
 
 
-def handle_reindex(ingestor: DocumentIngestor):
-    """
-    Handle re-indexing of documents.
-    
-    Args:
-        ingestor: DocumentIngestor instance
-    """
-    try:
-        with st.spinner("Clearing vector store..."):
-            st.session_state.vector_store.clear()
-            st.session_state.indexed_files = []
-            st.session_state.demo_loaded = False
-        
-        show_success("Vector store cleared. Please upload documents to re-index.")
-    
-    except Exception as e:
-        logger.error(f"Error during re-index: {e}")
-        show_error(f"Error during re-index: {e}")
-
-
-def handle_demo_load(ingestor: DocumentIngestor, force_reindex: bool = False):
+def handle_demo_load(ingestor: DocumentIngestor):
     """
     Handle loading demo documents.
     
     Args:
         ingestor: DocumentIngestor instance
-        force_reindex: Whether to force re-indexing even if already loaded
     """
     # Check if already loaded
-    if st.session_state.demo_loaded and not force_reindex:
-        show_info("✅ Demo documents already indexed! Use the 🔄 button to force re-index.")
+    if st.session_state.demo_loaded:
+        show_info("✅ Demo documents already loaded!")
         return
     
     try:
@@ -264,31 +249,45 @@ def handle_chat_input(prompt: str, top_k: int, citations_enabled: bool):
         citations_enabled: Whether to include citations
     """
     # Add user message to chat
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    render_chat_message("user", prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt, "sources": []})
+    st.session_state.msg_count += 1
     
     # Generate response
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            try:
-                answer, documents = st.session_state.rag_pipeline.query(
-                    prompt,
-                    top_k=top_k,
-                    include_citations=citations_enabled
-                )
-                
-                st.markdown(answer)
-                
-                # Add assistant message to chat
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": answer
-                })
-            
-            except Exception as e:
-                error_msg = f"Error generating response: {e}"
-                logger.error(error_msg)
-                st.error(error_msg)
+    try:
+        answer, documents = st.session_state.rag_pipeline.query(
+            prompt,
+            top_k=top_k,
+            include_citations=citations_enabled
+        )
+        
+        # Prepare sources for the sources drawer
+        sources = []
+        if citations_enabled and documents:
+            for doc in documents:
+                source = {
+                    'filename': doc.metadata.get('filename', 'Unknown'),
+                    'page': f"Page {doc.metadata.get('page', 'unknown')}",
+                    'snippet': doc.page_content[:200] + "..." if len(doc.page_content) > 200 else doc.page_content
+                }
+                sources.append(source)
+        
+        # Add assistant message to chat
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer,
+            "sources": sources
+        })
+        st.session_state.msg_count += 1
+        
+    except Exception as e:
+        error_msg = f"Error generating response: {e}"
+        logger.error(error_msg)
+        show_error(error_msg)
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": f"I encountered an error: {e}",
+            "sources": []
+        })
 
 
 def main():
@@ -296,25 +295,34 @@ def main():
     # Initialize session state
     initialize_session_state()
     
-    # Render sidebar configuration
-    config_values = render_sidebar_config(st.session_state.config)
+    # Inject custom CSS
+    inject_custom_css()
     
-    # Render sidebar actions
-    actions = render_sidebar_actions()
+    # Render header
+    header_actions = render_header()
     
-    # Render demo mode controls (always render to get state)
-    demo_state = render_demo_mode_controls(st.session_state.demo_questions)
+    # Handle settings button
+    if header_actions['settings_clicked']:
+        st.session_state.show_settings = not st.session_state.show_settings
     
-    # Apply demo config overrides if demo mode is enabled
-    if demo_state['enabled']:
-        demo_overrides = st.session_state.demo_config.get_demo_config_overrides()
-        config_values['top_k'] = demo_overrides['top_k']
-        config_values['chunk_size'] = demo_overrides['chunk_size']
-        config_values['chunk_overlap'] = demo_overrides['chunk_overlap']
-        config_values['citations_enabled'] = demo_overrides['citations_enabled']
+    # Show settings modal if open
+    config_values = None
+    if st.session_state.show_settings:
+        with st.expander("⚙️ Settings", expanded=True):
+            config_values = render_settings_modal(st.session_state.config)
+            if st.button("Close Settings", use_container_width=True):
+                st.session_state.show_settings = False
+                st.rerun()
     
-    # Render indexed files in sidebar
-    render_indexed_files(st.session_state.indexed_files)
+    # Use current config if settings not changed
+    if config_values is None:
+        config_values = {
+            'provider': st.session_state.config.model_provider,
+            'citations_enabled': st.session_state.config.citations_enabled,
+            'top_k': st.session_state.config.top_k,
+            'chunk_size': st.session_state.config.chunk_size,
+            'chunk_overlap': st.session_state.config.chunk_overlap
+        }
     
     # Initialize components if not already done or if provider changed
     if (st.session_state.vector_store is None or 
@@ -322,128 +330,110 @@ def main():
         st.session_state.rag_pipeline.provider != config_values['provider']):
         initialize_components(config_values['provider'])
     
-    # Handle clear chat action
-    if actions['clear_chat']:
-        st.session_state.messages = []
-        st.rerun()
-    
-    # Main content area
-    st.title("📚 Document Chatbot")
-    st.markdown("Upload documents and ask questions about them!")
-    
-    # Show status indicator
-    render_status_indicator(st.session_state.demo_loaded, st.session_state.indexing_in_progress)
-    
-    # Show demo indicator if demo is loaded
-    if st.session_state.demo_loaded:
-        render_demo_indicator(True)
-    
-    # Indexed files section (main content)
-    st.markdown("---")
-    st.subheader("Indexed files")
-    if st.session_state.indexed_files:
-        for filename in st.session_state.indexed_files:
-            st.text(f"• {filename}")
-        st.caption(f"Total: {len(st.session_state.indexed_files)} files")
-    else:
-        st.info("No files indexed yet. Upload documents or load demo data to get started.")
-    
-    # File upload section
-    st.markdown("---")
-    st.subheader("📤 Upload Documents")
-    uploaded_files = st.file_uploader(
-        "Choose files",
-        type=['pdf', 'docx', 'txt', 'md', 'csv'],
-        accept_multiple_files=True,
-        help="Supported formats: PDF, DOCX, TXT, MD, CSV"
-    )
-    
     # Create ingestor with current config
     ingestor = DocumentIngestor(st.session_state.config)
     
-    # Update chunk settings if changed
-    if (config_values['chunk_size'] != st.session_state.config.chunk_size or
-        config_values['chunk_overlap'] != st.session_state.config.chunk_overlap):
-        ingestor.text_splitter.chunk_size = config_values['chunk_size']
-        ingestor.text_splitter.chunk_overlap = config_values['chunk_overlap']
-    
-    # Handle demo document loading
-    if demo_state['enabled']:
-        if demo_state['load_clicked']:
-            handle_demo_load(ingestor, force_reindex=False)
-            st.rerun()
-        elif demo_state['force_reindex']:
-            handle_demo_load(ingestor, force_reindex=True)
-            st.rerun()
-        
-        # Handle insert question
-        if demo_state['insert_clicked'] and demo_state['selected_question']:
-            st.session_state.pending_question = demo_state['selected_question']
-    
-    # Handle file upload
-    if uploaded_files:
-        if st.button("📥 Index Files", type="primary"):
-            handle_file_upload(uploaded_files, ingestor)
-    
-    # Handle re-index action
-    if actions['reindex']:
-        handle_reindex(ingestor)
-        st.rerun()
-    
-    # Chat section
-    st.markdown("---")
-    st.subheader("Chat")
-    
-    # Display chat history
-    render_chat_history(st.session_state.messages)
-    
-    # Chat input - use text_input with Send button
-    if st.session_state.pending_question:
-        # Show the pending question in an editable text area
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            question_text = st.text_area(
-                "Edit and press Ask to submit:",
-                value=st.session_state.pending_question,
-                height=100,
-                key="pending_question_input"
-            )
-        with col2:
-            st.write("")  # Spacing
-            st.write("")  # Spacing
-            if st.button("Ask", type="primary", use_container_width=True):
-                if question_text.strip():
-                    handle_chat_input(
-                        question_text,
-                        config_values['top_k'],
-                        config_values['citations_enabled']
-                    )
-                    st.session_state.pending_question = None
-                    st.rerun()
-            if st.button("Cancel", use_container_width=True):
-                st.session_state.pending_question = None
-                st.rerun()
+    # Two-pane layout
+    if st.session_state.show_sources_for is not None:
+        # Three-column layout with sources drawer
+        left_col, middle_col, right_col = st.columns([2, 3, 2])
     else:
-        # Normal chat input with text_input and Send button
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            prompt = st.text_input(
-                "Ask a question",
-                value="",
-                key="chat_input_field",
-                placeholder="Type your question here..."
-            )
-        with col2:
-            st.write("")  # Spacing for alignment
-            send_clicked = st.button("Send", type="primary", use_container_width=True)
+        # Two-column layout without sources
+        left_col, middle_col = st.columns([2, 5])
+        right_col = None
+    
+    # Left pane: Documents
+    with left_col:
+        doc_actions = render_documents_pane(
+            st.session_state.indexed_files,
+            on_upload=None,
+            on_load_demo=None,
+            on_search=None
+        )
         
-        if send_clicked and prompt.strip():
+        # Handle upload button
+        if doc_actions['upload_clicked']:
+            st.session_state.show_upload_dialog = True
+        
+        # Handle load demo button
+        if doc_actions['load_demo_clicked']:
+            handle_demo_load(ingestor)
+            st.rerun()
+        
+        # Show upload dialog
+        if st.session_state.show_upload_dialog:
+            st.markdown("---")
+            st.markdown("**Upload Documents**")
+            uploaded_files = st.file_uploader(
+                "Choose files",
+                type=['pdf', 'docx', 'txt', 'md', 'csv'],
+                accept_multiple_files=True,
+                help="Supported formats: PDF, DOCX, TXT, MD, CSV",
+                key="file_uploader_widget"
+            )
+            
+            upload_col1, upload_col2 = st.columns(2)
+            with upload_col1:
+                if st.button("Upload & Index", type="primary", use_container_width=True):
+                    if uploaded_files:
+                        handle_file_upload(uploaded_files, ingestor)
+                        st.session_state.show_upload_dialog = False
+                        st.rerun()
+                    else:
+                        show_warning("Please select files to upload")
+            with upload_col2:
+                if st.button("Cancel", use_container_width=True):
+                    st.session_state.show_upload_dialog = False
+                    st.rerun()
+    
+    # Middle pane: Chat
+    with middle_col:
+        # Get suggested questions if demo is loaded
+        suggested_questions = []
+        if st.session_state.demo_loaded and st.session_state.demo_questions:
+            # Get first 3 questions from all categories
+            for category, questions in st.session_state.demo_questions.items():
+                suggested_questions.extend(questions[:1])  # Take first from each category
+                if len(suggested_questions) >= 3:
+                    break
+        
+        chat_actions = render_chat_pane(
+            st.session_state.messages,
+            suggested_questions=suggested_questions if not st.session_state.messages else [],
+            on_send=None,
+            show_sources_for_msg=st.session_state.show_sources_for
+        )
+        
+        # Handle sources button click
+        if chat_actions.get('sources_clicked_for') is not None:
+            st.session_state.show_sources_for = chat_actions['sources_clicked_for']
+            st.rerun()
+        
+        # Handle send/submit
+        if chat_actions['send_clicked'] and chat_actions['prompt']:
             handle_chat_input(
-                prompt,
+                chat_actions['prompt'],
                 config_values['top_k'],
                 config_values['citations_enabled']
             )
             st.rerun()
+    
+    # Right pane: Sources drawer (if showing sources)
+    if right_col and st.session_state.show_sources_for is not None:
+        with right_col:
+            msg_idx = st.session_state.show_sources_for
+            if 0 <= msg_idx < len(st.session_state.messages):
+                message = st.session_state.messages[msg_idx]
+                sources = message.get('sources', [])
+                
+                def close_sources():
+                    st.session_state.show_sources_for = None
+                
+                render_sources_drawer(sources, on_close=close_sources)
+                
+                if st.button("✕ Close Sources", use_container_width=True):
+                    st.session_state.show_sources_for = None
+                    st.rerun()
 
 
 if __name__ == "__main__":
