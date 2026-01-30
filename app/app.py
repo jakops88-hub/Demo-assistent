@@ -404,6 +404,11 @@ def main():
             show_sources_for_msg=st.session_state.show_sources_for
         )
         
+        # Handle sources button click
+        if chat_actions.get('sources_clicked_for') is not None:
+            st.session_state.show_sources_for = chat_actions['sources_clicked_for']
+            st.rerun()
+        
         # Handle send/submit
         if chat_actions['send_clicked'] and chat_actions['prompt']:
             handle_chat_input(

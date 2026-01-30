@@ -465,17 +465,18 @@ def render_suggested_questions(questions: List[str], on_click=None):
     return selected_question
 
 
-def render_sources_button(num_sources: int) -> bool:
+def render_sources_button(num_sources: int, msg_idx: int) -> bool:
     """
     Render a "Sources (N)" button.
     
     Args:
         num_sources: Number of sources
+        msg_idx: Index of the message
         
     Returns:
         True if button was clicked
     """
-    return st.button(f"📚 Sources ({num_sources})", key=f"sources_btn_{num_sources}_{st.session_state.get('msg_count', 0)}")
+    return st.button(f"📚 Sources ({num_sources})", key=f"sources_btn_msg_{msg_idx}")
 
 
 def render_sources_drawer(sources: List[Dict], on_close=None):
@@ -523,7 +524,7 @@ def render_chat_pane(messages: List[dict], suggested_questions: List[str] = None
         show_sources_for_msg: Index of message to show sources for (or None)
         
     Returns:
-        Dictionary with action states
+        Dictionary with action states including which message's sources button was clicked
     """
     st.markdown('<div class="documind-pane">', unsafe_allow_html=True)
     st.markdown('<h2 class="documind-pane-title">Chat</h2>', unsafe_allow_html=True)
@@ -536,15 +537,15 @@ def render_chat_pane(messages: List[dict], suggested_questions: List[str] = None
     st.markdown("---")
     
     # Chat messages
+    sources_clicked_for = None
     if messages:
         for idx, message in enumerate(messages):
             render_chat_message(message['role'], message['content'])
             
             # Show sources button for assistant messages
             if message['role'] == 'assistant' and message.get('sources'):
-                if render_sources_button(len(message['sources'])):
-                    # Store which message's sources to show
-                    st.session_state['show_sources_for'] = idx
+                if render_sources_button(len(message['sources']), idx):
+                    sources_clicked_for = idx
     else:
         st.info("👋 Ask a question to get started!")
     
@@ -569,6 +570,7 @@ def render_chat_pane(messages: List[dict], suggested_questions: List[str] = None
     return {
         'prompt': prompt if send_clicked else (selected_suggested or ""),
         'send_clicked': send_clicked or bool(selected_suggested),
+        'sources_clicked_for': sources_clicked_for
     }
 
 
