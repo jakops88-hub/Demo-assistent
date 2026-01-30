@@ -11,6 +11,7 @@ This script follows the exact requirements from the problem statement:
 6. Creates a demo README
 """
 import os
+import re
 import sys
 import time
 import subprocess
@@ -266,13 +267,26 @@ def capture_demo():
             print_info("Loading demo documents...")
             doc_count = 0
             try:
-                # Try "Load demo data" button first (new UI)
-                load_btn = page.get_by_role("button", name="Load demo data")
-                if not load_btn.is_visible(timeout=2000):
-                    # Fallback to "Load demo documents" button
-                    load_btn = page.get_by_role("button", name="Load demo documents", exact=True)
+                # Try "Load demo data" button first (new UI), then fallback
+                load_btn = None
+                try:
+                    btn = page.get_by_role("button", name="Load demo data")
+                    if btn.is_visible(timeout=2000):
+                        load_btn = btn
+                        print_info("Found 'Load demo data' button")
+                except Exception:
+                    pass
                 
-                if load_btn.is_visible(timeout=3000):
+                if load_btn is None:
+                    try:
+                        btn = page.get_by_role("button", name="Load demo documents", exact=True)
+                        if btn.is_visible(timeout=2000):
+                            load_btn = btn
+                            print_info("Found 'Load demo documents' button")
+                    except Exception:
+                        pass
+                
+                if load_btn is not None:
                     load_btn.click()
                     page.wait_for_timeout(2000)
                     print_info("✓ Demo documents loading...")
@@ -302,7 +316,6 @@ def capture_demo():
                             total_content = total_text.text_content()
                             print_info(f"Document count info: {total_content}")
                             # Extract number from "Total: 3 document(s)"
-                            import re
                             match = re.search(r'(\d+)', total_content)
                             if match:
                                 doc_count = int(match.group(1))
@@ -324,14 +337,27 @@ def capture_demo():
             
             # Type the specific question "What is the vacation policy?"
             print_info(f"Typing question: '{DEMO_QUESTION}'...")
+            chat_input = None
             try:
-                # Find the chat input field
-                chat_input = page.get_by_placeholder("Ask about your documents...")
-                if not chat_input.is_visible(timeout=3000):
-                    # Try alternative selectors
-                    chat_input = page.locator('[data-testid="stTextInput"] input').first
+                # Find the chat input field - try multiple methods
+                try:
+                    inp = page.get_by_placeholder("Ask about your documents...")
+                    if inp.is_visible(timeout=3000):
+                        chat_input = inp
+                        print_info("Found chat input by placeholder")
+                except Exception:
+                    pass
                 
-                if chat_input.is_visible(timeout=3000):
+                if chat_input is None:
+                    try:
+                        inp = page.locator('[data-testid="stTextInput"] input').first
+                        if inp.is_visible(timeout=2000):
+                            chat_input = inp
+                            print_info("Found chat input by testid")
+                    except Exception:
+                        pass
+                
+                if chat_input is not None:
                     chat_input.click()
                     chat_input.fill(DEMO_QUESTION)
                     page.wait_for_timeout(1000)
@@ -349,14 +375,18 @@ def capture_demo():
             # Submit question
             print_info("Submitting question...")
             try:
-                # Try Send button
-                send_btn = page.get_by_role("button", name="Send", exact=True)
-                if send_btn.is_visible(timeout=2000):
-                    send_btn.click()
-                    print_info("✓ Question submitted (Send)")
-                else:
-                    # Try pressing Enter
-                    chat_input = page.get_by_placeholder("Ask about your documents...")
+                # Try Send button first, fallback to Enter key
+                submitted = False
+                try:
+                    send_btn = page.get_by_role("button", name="Send", exact=True)
+                    if send_btn.is_visible(timeout=2000):
+                        send_btn.click()
+                        print_info("✓ Question submitted (Send)")
+                        submitted = True
+                except Exception:
+                    pass
+                
+                if not submitted and chat_input is not None:
                     chat_input.press("Enter")
                     print_info("✓ Question submitted (Enter)")
                 
@@ -388,14 +418,27 @@ def capture_demo():
             
             # Open Sources drawer (required per problem statement)
             print_info("Opening Sources drawer...")
+            sources_btn = None
             try:
-                # Look for Sources button
-                sources_btn = page.get_by_role("button", name="Sources")
-                if not sources_btn.is_visible(timeout=2000):
-                    # Try alternative: button with "📚 Sources" text
-                    sources_btn = page.locator('button:has-text("Sources")').first
+                # Look for Sources button - try multiple methods
+                try:
+                    btn = page.get_by_role("button", name="Sources")
+                    if btn.is_visible(timeout=2000):
+                        sources_btn = btn
+                        print_info("Found Sources button by role")
+                except Exception:
+                    pass
                 
-                if sources_btn.is_visible(timeout=3000):
+                if sources_btn is None:
+                    try:
+                        btn = page.locator('button:has-text("Sources")').first
+                        if btn.is_visible(timeout=2000):
+                            sources_btn = btn
+                            print_info("Found Sources button by text")
+                    except Exception:
+                        pass
+                
+                if sources_btn is not None:
                     sources_btn.click()
                     page.wait_for_timeout(2000)
                     print_info("✓ Sources drawer opened")

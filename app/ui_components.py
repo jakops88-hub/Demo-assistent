@@ -231,13 +231,21 @@ def inject_custom_css():
         box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
     }
     
-    /* Override Streamlit's default red focus ring */
-    *:focus {
+    /* Override Streamlit's default focus ring on specific interactive elements */
+    .stCheckbox input:focus,
+    .stCheckbox input:focus-visible,
+    .stRadio input:focus,
+    .stRadio input:focus-visible,
+    .stSlider input:focus,
+    .stSlider input:focus-visible {
         outline-color: #6366f1 !important;
     }
     
-    *:focus-visible {
-        outline-color: #6366f1 !important;
+    /* File uploader focus */
+    .stFileUploader [data-testid="stFileUploader"]:focus-within {
+        border-color: #6366f1 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
     }
     
     /* Hide sidebar by default for clean two-pane layout */
