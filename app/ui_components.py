@@ -275,43 +275,43 @@ def render_settings_modal(config) -> dict:
         help="Show source documents and page numbers in responses"
     )
     
-    # Advanced settings (in expander)
-    with st.expander("⚙️ Advanced Settings"):
-        st.caption("🔍 **Retrieval Settings**")
-        top_k = st.slider(
-            "Top K Results",
-            min_value=1,
-            max_value=20,
-            value=config.top_k,
-            help="Number of document chunks to retrieve"
-        )
-        
-        st.caption("📄 **Chunking Settings**")
-        st.caption("⚠️ Changes require re-indexing documents")
-        chunk_size = st.number_input(
-            "Chunk Size",
-            min_value=100,
-            max_value=2000,
-            value=config.chunk_size,
-            step=100,
-            help="Size of text chunks for processing"
-        )
-        
-        chunk_overlap = st.number_input(
-            "Chunk Overlap",
-            min_value=0,
-            max_value=500,
-            value=config.chunk_overlap,
-            step=50,
-            help="Overlap between consecutive chunks"
-        )
+    # Advanced settings (inline, no nested expander)
+    st.markdown("---")
+    st.caption("🔍 **Retrieval Settings**")
+    top_k = st.slider(
+        "Top K Results",
+        min_value=1,
+        max_value=20,
+        value=config.top_k,
+        help="Number of document chunks to retrieve"
+    )
+    
+    st.caption("📄 **Chunking Settings**")
+    st.caption("⚠️ Changes require re-indexing documents")
+    chunk_size = st.number_input(
+        "Chunk Size",
+        min_value=100,
+        max_value=2000,
+        value=config.chunk_size,
+        step=100,
+        help="Size of text chunks for processing"
+    )
+    
+    chunk_overlap = st.number_input(
+        "Chunk Overlap",
+        min_value=0,
+        max_value=500,
+        value=config.chunk_overlap,
+        step=50,
+        help="Overlap between consecutive chunks"
+    )
     
     return {
         'provider': provider,
         'citations_enabled': citations_enabled,
-        'top_k': top_k if 'top_k' in locals() else config.top_k,
-        'chunk_size': chunk_size if 'chunk_size' in locals() else config.chunk_size,
-        'chunk_overlap': chunk_overlap if 'chunk_overlap' in locals() else config.chunk_overlap
+        'top_k': top_k,
+        'chunk_size': chunk_size,
+        'chunk_overlap': chunk_overlap
     }
 
 

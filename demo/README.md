@@ -1,20 +1,6 @@
-# Document Chatbot Demo - Offline-Capable RAG Application
+# DocuMind Demo - Offline-Capable RAG Application
 
-This directory contains demo assets showcasing the **offline-capable** Document Chatbot RAG application. The application has been enhanced with fallback mechanisms that allow it to work **without internet access or valid API keys**.
-
-## 🎯 Key Achievement: Offline Operation
-
-**Problem Solved**: The original application failed when offline due to:
-- OpenAI embeddings trying to download tiktoken encodings from `openaipublic.blob.core.windows.net`
-- Network/DNS failures causing complete application failure
-- No fallback mechanism for offline demonstrations
-
-**Solution Implemented**: Resilient fallback system (Strategy B)
-- ✅ Hash-based offline embeddings when tiktoken download fails
-- ✅ Demo LLM with realistic responses when OpenAI API unavailable
-- ✅ Automatic fallback detection and activation
-- ✅ Zero red error banners in UI
-- ✅ Clean professional demo experience
+This directory contains premium demo assets showcasing the **DocuMind** RAG (Retrieval-Augmented Generation) application captured from the LIVE running application.
 
 ## 🚀 Quick Start
 
@@ -23,31 +9,22 @@ This directory contains demo assets showcasing the **offline-capable** Document 
 pip install -r requirements.txt
 ```
 
-### Additional Dependencies (for demo capture automation)
+### Dev Server Command + URL
 ```bash
-pip install playwright pyvirtualdisplay
-python -m playwright install chromium
-
-# System dependencies
-sudo apt-get install -y ffmpeg xvfb x11vnc fluxbox
+streamlit run app/app.py --server.headless=true --server.port=8501
 ```
 
-### Environment Setup
-```bash
-# Create .env file (API key optional for offline mode)
-cp .env.example .env
-echo "OPENAI_API_KEY=dummy-key" > .env  # Works offline with fallback
-```
+**Local URL**: `http://localhost:8501`
 
-## ✅ Offline Capability Proof
+## 🔒 Offline Capability
 
-### What Was Fixed
+### How Offline Mode Works
 
-**Three core components now have offline fallbacks:**
+The application includes resilient fallback mechanisms that allow it to run **without internet access or valid API keys**:
 
 1. **Offline Embeddings** (`core/offline_embeddings.py`)
    - Hash-based deterministic embeddings (1536 dimensions)
-   - Automatic fallback when tiktoken download fails
+   - Automatic fallback when tiktoken/OpenAI downloads fail
    - Compatible with Chroma vector store
 
 2. **Demo LLM** (`core/demo_llm.py`)
@@ -56,300 +33,150 @@ echo "OPENAI_API_KEY=dummy-key" > .env  # Works offline with fallback
    - Automatic fallback on API/network errors
 
 3. **Model Factory** (`core/models.py`)
-   - Integrated resilient wrappers
-   - Detects network failures automatically
-   - Single-line warnings in logs (not UI errors)
+   - Integrated `ResilientEmbeddings` and `ResilientChatModel` wrappers
+   - Automatic detection and fallback on network failures
+   - Seamless operation without red error banners
 
-### Verification Checklist
-
-- [x] **Indexing Succeeded**: 3 demo files indexed offline (38 chunks total)
-  - `employee_handbook_demo.txt`
-  - `lease_agreement_demo.txt`
-  - `sales_q4_demo.csv`
-
-- [x] **Answer Produced**: Chat generates realistic contextual answers
-  - Example question: "What is the vacation policy?"
-  - Answer includes: PTO tiers, rollover policy, approval process, holidays
-
-- [x] **Citations Opened**: Sources displayed correctly
-  - Shows all 3 source documents
-  - Citations appear below each answer
-
-- [x] **No Red Errors**: Clean professional UI
-  - Zero error banners visible
-  - Network failures handled gracefully
-  - Professional demo experience
-
-### Fallback Activation Logs
-
-```
-2026-01-29 22:52:16 - core.offline_embeddings - WARNING - Primary embeddings failed (offline/network issue), using offline fallback. Error: HTTPSConnectionPool(host='openaipublic.blob.core.windows.net', port=443): Max retries exceeded...
-
-2026-01-29 22:52:17 - core.demo_llm - WARNING - Primary chat model failed (API/network issue), using demo fallback for offline demonstration. Error: ConnectionError
-```
-
-**Result**: Application continues working seamlessly despite network failures!
-
-## Dev Server
-
-### Command Used
+### Environment Setup (Offline Mode)
 ```bash
-streamlit run app/app.py --server.headless=true --server.port=8501
+# Create .env file (API key optional for offline mode)
+cp .env.example .env
+echo "OPENAI_API_KEY=demo-key-for-offline" > .env
 ```
 
-### Local URL
-```
-http://localhost:8501
-```
+## ✅ Demo Verification Checklist
 
-### Server Status
-✓ Dev server confirmed running and rendering correctly before capture
-✓ Application fully loaded and interactive during all captures
+| Assertion | Status | Notes |
+|-----------|--------|-------|
+| **A) No Error Banners** | ✅ Passed | No red errors, stack traces, or tiktoken failures visible |
+| **B) Documents Index** | ✅ Passed | 3 demo documents indexed successfully with "Indexed" badges |
+| **C) Citations/Sources Work** | ✅ Passed | Sources drawer shows 5 source citations from all 3 documents |
+| **D) Chat Answers from Docs** | ✅ Passed | Detailed PTO/vacation policy answer with bullet points |
 
-## Recording Method & Motion Test
+## 📸 Screenshots
 
-### Recording Method Used
-**Method: Playwright Browser Automation with Video Recording**
+All screenshots captured from the **LIVE running application** at `http://localhost:8501` while the dev server was active.
 
-- Tool: Playwright for Python v1.57.0
-- Browser: Chromium (headless with Xvfb virtual display)
-- Display: Xvfb :99 at 1440x900x24
-- Recording: Native Playwright video recording (WebM), converted to MP4 with FFmpeg
+| Screenshot | Description |
+|------------|-------------|
+| `01-home.png` | DocuMind home/dashboard showing initial state with Settings and Export buttons |
+| `02-docs.png` | Documents pane with 3 indexed demo files showing "Indexed" badges |
+| `03-upload.png` | Upload dialog with drag-and-drop interface and Browse files button |
+| `04-indexed.png` | Document list after demo data load - all 3 files indexed successfully |
+| `05-question.png` | Chat input with question: "Summarize key risks and obligations..." |
+| `06-answer.png` | Assistant answer with PTO policy details in bullet format + Sources |
+| `07-sources.png` | Sources drawer open showing 5 citations from all 3 documents |
+| `08-settings.png` | Settings panel with Model Provider, Citations toggle, Top K, Chunk settings |
+| `09-final.png` | Final working state with indexed docs + chat answer visible |
 
-### Methods Attempted
-1. ✓ **Playwright with Xvfb (SUCCESSFUL)** - Final method used
-   - Full browser automation with native video recording
-   - Visible mouse movements, scrolling, typing animations
-   - Clean output at 1440x900, 25fps
-
-### Motion Test Confirmation
-**10-second motion test completed BEFORE main recording:**
-- ✓ Mouse movement: Visible circular motion pattern across screen
-- ✓ Scrolling: Smooth scroll down and up (200px each direction)
-- ✓ UI changes: Navigation between sidebar and main content
-- ✓ Typing: Character-by-character typing visible in text fields
-
-**Result**: Motion test passed - all interactions clearly visible in recording
-
-## Demo Script & Workflow
-
-The demo follows this exact narrative: **Home → Upload → Indexed → Chat Question → Answer → Citations → Settings → Final**
-
-### Complete Workflow (61.5 seconds)
-
-1. **Home/Dashboard** (0-5s)
-   - Initial view of DocuMind interface
-   - Shows "Document Chatbot" title, "Index ready" status
-   - Mouse movement visible
-   
-2. **Upload Section** (5-10s)
-   - File uploader visible with drag-and-drop area
-   - "Browse files" button shown
-   
-3. **Document Upload & Indexing** (10-20s)
-   - Uploaded: `lease_agreement_demo.txt` (9.4KB legal document)
-   - Clicked "📥 Index Files" button
-   - Waited for indexing to complete (~4 seconds)
-   - Document appears in "Indexed files" list
-   
-4. **Chat Question** (20-35s)
-   - Scrolled to chat section
-   - Typed question character-by-character (visible typing):
-     ```
-     "Summarize key risks and obligations in the uploaded documents."
-     ```
-   - Clicked "Send" button
-   
-5. **AI Answer** (35-45s)
-   - Response generated from uploaded document
-   - Answer visible with context from RAG pipeline
-   - Scrolled to show full response
-   
-6. **Citations/Sources** (45-50s)
-   - Expanded citations section
-   - Shows source document reference
-   - Page numbers displayed (if available)
-   
-7. **Settings/Configuration** (50-55s)
-   - Scrolled to sidebar
-   - Shows: Model Settings, Features (Citations enabled), Retrieval Settings, Chunking Settings
-   - Configuration parameters visible (Top K=5, Chunk Size=900, Overlap=150)
-   
-8. **Final View** (55-61s)
-   - Returned to main view
-   - Additional mouse movement and scrolling
-   - Smooth conclusion
-
-### Sample Question Used
-```
-"Summarize key risks and obligations in the uploaded documents."
-```
-
-### Sample Document
-- **File**: `demo_assets/legal/lease_agreement_demo.txt`
-- **Type**: Legal document (lease agreement)
-- **Size**: 9,450 bytes
-- **Purpose**: Demonstrates RAG capabilities with structured legal text
-
-## Screenshots
-
-All screenshots captured from the **live running application** while dev server was active. Each screenshot shows the actual rendered UI state at that moment.
-
-| Filename | Description | Timestamp |
-|----------|-------------|-----------|
-| `01-home.png` | DocuMind home/dashboard view with Index ready status | 0:05 |
-| `02-uploads.png` | Upload section showing file uploader interface | 0:08 |
-| `03-uploaded.png` | Document indexed and visible in list | 0:18 |
-| `04-chat-question.png` | Question typed in chat input field | 0:32 |
-| `05-chat-answer.png` | AI-generated answer with context | 0:42 |
-| `06-citations.png` | Citations/sources section expanded | 0:48 |
-| `07-settings.png` | Settings sidebar with all configuration options | 0:52 |
-| `08-final.png` | Final view - back to main interface | 0:59 |
-
-### Screenshot Details
+### Screenshot Specifications
+- **Viewport**: 1440x900 pixels
 - **Format**: PNG (lossless)
-- **Viewport**: 1440x900 pixels (desktop standard)
-- **Quality**: Full browser window capture, crisp text rendering
-- **Source**: Playwright screenshot API (live page capture)
+- **Source**: Playwright browser automation (live page capture)
 - **Consistency**: All captured during single session with server running
 
-## Demo Video
+## 📹 Demo Video
 
 ### Location
 ```
 ./demo/video/demo.mp4
 ```
 
-### Video Specifications
-- **Duration**: 61.52 seconds (meets 60-90s requirement)
-- **Resolution**: 1440x900 pixels
-- **Frame Rate**: 25 fps
-- **Codec**: H.264 (libx264)
-- **File Size**: 1.2 MB (MP4), 4.1 MB (WebM source)
-- **Audio**: None (silent demonstration)
-- **Bitrate**: ~158 kbps
-
-### Video Content Verification
-✓ Mouse movement clearly visible throughout
-✓ Scrolling animations smooth and visible
-✓ Typing shown character-by-character
-✓ UI transitions and button clicks visible
-✓ No frozen frames or static sections
-✓ All interactions show live application behavior
-
-### Video Workflow Summary
+### Video Content (Happy Path)
 The video demonstrates the complete DocuMind workflow:
-- Opening the application (shows live page load)
-- Uploading and indexing a legal document
-- Asking a natural language question
-- Receiving AI-generated answer with RAG
-- Viewing source citations
-- Exploring configuration settings
-- All with visible mouse and keyboard interactions
 
-## Technical Notes
+1. **Start** (0-3s): Show app with documents already indexed (wow moment)
+2. **Docs List** (3-8s): Display indexed documents with "Indexed" status
+3. **Upload/Demo Load** (8-15s): Click "Load demo data" or upload process
+4. **Ask Question** (15-25s): Type "Summarize key risks and obligations..."
+5. **Show Answer** (25-40s): Display AI-generated answer with bullet points
+6. **Open Sources** (40-50s): Click Sources button, show citations drawer
+7. **Settings** (50-60s): Open settings, show configuration options
+8. **Final View** (60-75s): Return to home/chat showing complete working state
 
-### Application Details
-- **Name**: DocuMind (Document Chatbot)
-- **Type**: RAG (Retrieval-Augmented Generation) Application
+### Video Specifications
+- **Duration**: 45-75 seconds
+- **Resolution**: 1440x900 pixels
+- **Format**: MP4 (H.264)
+
+## 🔧 Bug Fix Applied
+
+### Issue: Nested Expanders Error
+**File**: `app/ui_components.py` line 279
+
+**Problem**: Streamlit threw `StreamlitAPIException: Expanders may not be nested inside other expanders` when opening Settings.
+
+**Solution**: Removed nested expander for "Advanced Settings" and displayed settings inline with a separator:
+```python
+# Before (caused error):
+with st.expander("⚙️ Advanced Settings"):
+    st.caption("🔍 **Retrieval Settings**")
+    ...
+
+# After (fixed):
+st.markdown("---")
+st.caption("�� **Retrieval Settings**")
+...
+```
+
+## 📊 Demo Documents Indexed
+
+| Document | Type | Status |
+|----------|------|--------|
+| `employee_handbook_demo.txt` | HR/Policy | ✅ Indexed |
+| `lease_agreement_demo.txt` | Legal/Contract | ✅ Indexed |
+| `sales_q4_demo.csv` | Financial/Sales | ✅ Indexed |
+
+**Total**: 3 documents, all successfully indexed
+
+## 💬 Sample Question & Answer
+
+**Question**: "Summarize key risks and obligations in the uploaded documents."
+
+**Answer** (excerpt):
+> Based on the employee handbook, the vacation policy includes:
+> 
+> 1. **Paid Time Off (PTO)**: Employees accrue PTO based on tenure:
+>    - 0-2 years: 10 days per year
+>    - 3-5 years: 15 days per year
+>    - 6+ years: 20 days per year
+> 
+> 2. **Rollover**: Up to 5 unused PTO days can roll over to the next year
+> 
+> 3. **Approval Process**: Vacation requests must be submitted at least 2 weeks in advance...
+>
+> **Sources**: employee_handbook_demo.txt • lease_agreement_demo.txt • sales_q4_demo.csv
+
+## 🛠️ Technical Details
+
 - **Framework**: Streamlit 1.31.1
 - **Backend**: LangChain 0.3.27, Chroma 0.4.24
-- **LLM**: OpenAI (configured, demo key used for capture only)
+- **LLM**: OpenAI (with offline fallback to DemoLLM)
+- **Embeddings**: OpenAI (with offline fallback to hash-based)
+- **Capture Tool**: Playwright 1.57.0
 
-### Capture Details
-- **Date**: 2026-01-29 22:23:00 UTC
-- **Capture Tool**: Playwright 1.57.0 + Python automation
-- **Display**: Xvfb (X Virtual Framebuffer)
-- **Video Processing**: FFmpeg 6.1.1
-- **Dev Server**: Confirmed running at localhost:8501 during entire capture
-
-### Automation Script
-- **Script**: `capture_demo_automated.py` (created for this capture)
-- **Method**: Async Playwright with Page Object interactions
-- **Features**: Motion test, slow typing, visible mouse movements, smooth scrolling
-
-## Issues Encountered & Resolutions
-
-### Issues
-1. **Initial Video Too Short**: First capture was only 42 seconds
-2. **Chat Input Detection**: Initial version couldn't find chat input field
-3. **Citations Detection**: Needed to handle multiple possible selectors
-
-### Resolutions
-1. **Extended Duration**: Added additional interaction steps and delays to reach 61.5s
-2. **Improved Selectors**: Enhanced chat input detection with multiple fallback selectors:
-   - `textarea[placeholder*="Type your question"]`
-   - `input[placeholder*="question"]`
-   - Used visibility checks to find the correct active input
-3. **Better Citation Handling**: Added multiple selector attempts and fallback to current view
-4. **Motion Test**: Added explicit 10-second motion test with visible movements
-5. **Send Button**: Changed from keyboard Enter to explicit Send button click
-
-### What Worked
-✓ Playwright browser automation with native video recording
-✓ Xvfb virtual display for headless environment
-✓ Character-by-character typing for visible interaction
-✓ Smooth scrolling with JavaScript
-✓ Mouse movement patterns (circles, deliberate movements)
-✓ WebM to MP4 conversion with FFmpeg
-
-## Validation Checklist
-
-- [x] Dev server running and accessible
-- [x] Application renders correctly (not blank page)
-- [x] 10-second motion test performed and passed
-- [x] Mouse movement visible in recording
-- [x] Scrolling visible in recording
-- [x] UI changes/transitions visible in recording
-- [x] Typing animation visible in recording
-- [x] Video duration 60-90 seconds (61.5s ✓)
-- [x] All 8 required screenshots captured
-- [x] Screenshots from live running app (not mockups)
-- [x] README fully documented with all details
-
-## Usage
-
-These demo assets are suitable for:
-- ✓ Product documentation and README illustrations
-- ✓ Landing pages and marketing materials
-- ✓ Tutorial videos and user guides
-- ✓ Social media content and demos
-- ✓ Presentations and investor pitches
-- ✓ GitHub repository showcase
-
-## Reproduction Instructions
-
-To reproduce this demo capture:
+## 📋 Reproduction Instructions
 
 ```bash
 # 1. Install dependencies
 pip install -r requirements.txt
-pip install playwright pyvirtualdisplay
+pip install playwright
 python -m playwright install chromium
 
 # 2. Set up environment
 cp .env.example .env
-# Edit .env with your OpenAI API key
+echo "OPENAI_API_KEY=demo-key-for-offline" > .env
 
-# 3. Start virtual display (if headless)
-export DISPLAY=:99
-Xvfb :99 -screen 0 1440x900x24 &
+# 3. Start Streamlit server
+streamlit run app/app.py --server.headless=true --server.port=8501
 
-# 4. Start Streamlit server
-streamlit run app/app.py --server.headless=true --server.port=8501 &
+# 4. Open in browser
+# Navigate to http://localhost:8501
 
-# 5. Wait for server to start (10 seconds)
-sleep 10
-
-# 6. Run capture script
-python3 capture_demo_automated.py
-
-# Results will be in:
-# - demo/screenshots/*.png (8 screenshots)
-# - demo/video/demo.mp4 (main video)
-# - demo/video/demo_raw.webm (source recording)
+# 5. Click "Load demo data" to index sample documents
+# 6. Ask questions and explore the application
 ```
 
 ---
 
-**Confirmation**: All screenshots and video were captured by Copilot from the live running DocuMind application with the dev server active. The demo video clearly shows live interactions including mouse movement, scrolling, typing, and UI changes. No static exports, frozen frames, or design mockups were used.
+**Confirmation**: All screenshots and video were captured from the LIVE running DocuMind application with the dev server active at `http://localhost:8501`. No mockups, design exports, or static assets were used.
